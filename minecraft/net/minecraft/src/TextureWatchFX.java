@@ -11,114 +11,106 @@ public class TextureWatchFX extends TextureFX
      * Holds the game instance to retrieve information like world provider and time.
      */
     private Minecraft mc;
-
-    /** Holds the image of the watch from items.png in rgb format. */
-    private int[] watchIconImageData = new int[256];
-
-    /** Holds the image of the dial.png in rgb format. */
-    private int[] dialImageData = new int[256];
+    private int watchIconImageData[];
+    private int dialImageData[];
     private double field_76861_j;
     private double field_76862_k;
 
     public TextureWatchFX(Minecraft par1Minecraft)
     {
         super(Item.pocketSundial.getIconFromDamage(0));
-        this.mc = par1Minecraft;
-        this.tileImage = 1;
+        watchIconImageData = new int[256];
+        dialImageData = new int[256];
+        mc = par1Minecraft;
+        tileImage = 1;
 
         try
         {
-            BufferedImage var2 = ImageIO.read(Minecraft.class.getResource("/gui/items.png"));
-            int var3 = this.iconIndex % 16 * 16;
-            int var4 = this.iconIndex / 16 * 16;
-            var2.getRGB(var3, var4, 16, 16, this.watchIconImageData, 0, 16);
-            var2 = ImageIO.read(Minecraft.class.getResource("/misc/dial.png"));
-            var2.getRGB(0, 0, 16, 16, this.dialImageData, 0, 16);
+            BufferedImage bufferedimage = ImageIO.read((net.minecraft.client.Minecraft.class).getResource("/gui/items.png"));
+            int i = (iconIndex % 16) * 16;
+            int j = (iconIndex / 16) * 16;
+            bufferedimage.getRGB(i, j, 16, 16, watchIconImageData, 0, 16);
+            bufferedimage = ImageIO.read((net.minecraft.client.Minecraft.class).getResource("/misc/dial.png"));
+            bufferedimage.getRGB(0, 0, 16, 16, dialImageData, 0, 16);
         }
-        catch (IOException var5)
+        catch (IOException ioexception)
         {
-            var5.printStackTrace();
+            ioexception.printStackTrace();
         }
     }
 
     public void onTick()
     {
-        double var1 = 0.0D;
+        double d = 0.0D;
 
-        if (this.mc.theWorld != null && this.mc.thePlayer != null)
+        if (mc.theWorld != null && mc.thePlayer != null)
         {
-            float var3 = this.mc.theWorld.getCelestialAngle(1.0F);
-            var1 = (double)(-var3 * (float)Math.PI * 2.0F);
+            float f = mc.theWorld.getCelestialAngle(1.0F);
+            d = -f * (float)Math.PI * 2.0F;
 
-            if (!this.mc.theWorld.provider.isSurfaceWorld())
+            if (!mc.theWorld.worldProvider.isSurfaceWorld())
             {
-                var1 = Math.random() * Math.PI * 2.0D;
+                d = Math.random() * Math.PI * 2D;
             }
         }
 
-        double var22;
+        double d1;
 
-        for (var22 = var1 - this.field_76861_j; var22 < -Math.PI; var22 += (Math.PI * 2D))
+        for (d1 = d - field_76861_j; d1 < -Math.PI; d1 += (Math.PI * 2D)) { }
+
+        for (; d1 >= Math.PI; d1 -= (Math.PI * 2D)) { }
+
+        if (d1 < -1D)
         {
-            ;
+            d1 = -1D;
         }
 
-        while (var22 >= Math.PI)
+        if (d1 > 1.0D)
         {
-            var22 -= (Math.PI * 2D);
+            d1 = 1.0D;
         }
 
-        if (var22 < -1.0D)
+        field_76862_k += d1 * 0.10000000000000001D;
+        field_76862_k *= 0.80000000000000004D;
+        field_76861_j += field_76862_k;
+        double d2 = Math.sin(field_76861_j);
+        double d3 = Math.cos(field_76861_j);
+
+        for (int i = 0; i < 256; i++)
         {
-            var22 = -1.0D;
-        }
+            int j = watchIconImageData[i] >> 24 & 0xff;
+            int k = watchIconImageData[i] >> 16 & 0xff;
+            int l = watchIconImageData[i] >> 8 & 0xff;
+            int i1 = watchIconImageData[i] >> 0 & 0xff;
 
-        if (var22 > 1.0D)
-        {
-            var22 = 1.0D;
-        }
-
-        this.field_76862_k += var22 * 0.1D;
-        this.field_76862_k *= 0.8D;
-        this.field_76861_j += this.field_76862_k;
-        double var5 = Math.sin(this.field_76861_j);
-        double var7 = Math.cos(this.field_76861_j);
-
-        for (int var9 = 0; var9 < 256; ++var9)
-        {
-            int var10 = this.watchIconImageData[var9] >> 24 & 255;
-            int var11 = this.watchIconImageData[var9] >> 16 & 255;
-            int var12 = this.watchIconImageData[var9] >> 8 & 255;
-            int var13 = this.watchIconImageData[var9] >> 0 & 255;
-
-            if (var11 == var13 && var12 == 0 && var13 > 0)
+            if (k == i1 && l == 0 && i1 > 0)
             {
-                double var14 = -((double)(var9 % 16) / 15.0D - 0.5D);
-                double var16 = (double)(var9 / 16) / 15.0D - 0.5D;
-                int var18 = var11;
-                int var19 = (int)((var14 * var7 + var16 * var5 + 0.5D) * 16.0D);
-                int var20 = (int)((var16 * var7 - var14 * var5 + 0.5D) * 16.0D);
-                int var21 = (var19 & 15) + (var20 & 15) * 16;
-                var10 = this.dialImageData[var21] >> 24 & 255;
-                var11 = (this.dialImageData[var21] >> 16 & 255) * var11 / 255;
-                var12 = (this.dialImageData[var21] >> 8 & 255) * var18 / 255;
-                var13 = (this.dialImageData[var21] >> 0 & 255) * var18 / 255;
+                double d4 = -((double)(i % 16) / 15D - 0.5D);
+                double d5 = (double)(i / 16) / 15D - 0.5D;
+                int i2 = k;
+                int j2 = (int)((d4 * d3 + d5 * d2 + 0.5D) * 16D);
+                int k2 = (int)(((d5 * d3 - d4 * d2) + 0.5D) * 16D);
+                int l2 = (j2 & 0xf) + (k2 & 0xf) * 16;
+                j = dialImageData[l2] >> 24 & 0xff;
+                k = ((dialImageData[l2] >> 16 & 0xff) * i2) / 255;
+                l = ((dialImageData[l2] >> 8 & 0xff) * i2) / 255;
+                i1 = ((dialImageData[l2] >> 0 & 0xff) * i2) / 255;
             }
 
-            if (this.anaglyphEnabled)
+            if (anaglyphEnabled)
             {
-                int var23 = (var11 * 30 + var12 * 59 + var13 * 11) / 100;
-                int var15 = (var11 * 30 + var12 * 70) / 100;
-                int var24 = (var11 * 30 + var13 * 70) / 100;
-                var11 = var23;
-                var12 = var15;
-                var13 = var24;
+                int j1 = (k * 30 + l * 59 + i1 * 11) / 100;
+                int k1 = (k * 30 + l * 70) / 100;
+                int l1 = (k * 30 + i1 * 70) / 100;
+                k = j1;
+                l = k1;
+                i1 = l1;
             }
 
-            this.imageData[var9 * 4 + 0] = (byte)var11;
-            this.imageData[var9 * 4 + 1] = (byte)var12;
-            this.imageData[var9 * 4 + 2] = (byte)var13;
-            this.imageData[var9 * 4 + 3] = (byte)var10;
+            imageData[i * 4 + 0] = (byte)k;
+            imageData[i * 4 + 1] = (byte)l;
+            imageData[i * 4 + 2] = (byte)i1;
+            imageData[i * 4 + 3] = (byte)j;
         }
     }
 }

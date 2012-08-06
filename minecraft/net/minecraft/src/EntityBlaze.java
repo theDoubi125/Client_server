@@ -1,9 +1,11 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntityBlaze extends EntityMob
 {
     /** Random offset used in floating behaviour */
-    private float heightOffset = 0.5F;
+    private float heightOffset;
 
     /** ticks until heightOffset is randomized */
     private int heightOffsetUpdateTime;
@@ -12,10 +14,11 @@ public class EntityBlaze extends EntityMob
     public EntityBlaze(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/fire.png";
-        this.isImmuneToFire = true;
-        this.attackStrength = 6;
-        this.experienceValue = 10;
+        heightOffset = 0.5F;
+        texture = "/mob/fire.png";
+        isImmuneToFire = true;
+        attackStrength = 6;
+        experienceValue = 10;
     }
 
     public int getMaxHealth()
@@ -26,7 +29,7 @@ public class EntityBlaze extends EntityMob
     protected void entityInit()
     {
         super.entityInit();
-        this.dataWatcher.addObject(16, new Byte((byte)0));
+        dataWatcher.addObject(16, new Byte((byte)0));
     }
 
     /**
@@ -55,7 +58,7 @@ public class EntityBlaze extends EntityMob
 
     public int getBrightnessForRender(float par1)
     {
-        return 15728880;
+        return 0xf000f0;
     }
 
     /**
@@ -72,40 +75,40 @@ public class EntityBlaze extends EntityMob
      */
     public void onLivingUpdate()
     {
-        if (!this.worldObj.isRemote)
+        if (!worldObj.isRemote)
         {
-            if (this.isWet())
+            if (isWet())
             {
-                this.attackEntityFrom(DamageSource.drown, 1);
+                attackEntityFrom(DamageSource.drown, 1);
             }
 
-            --this.heightOffsetUpdateTime;
+            heightOffsetUpdateTime--;
 
-            if (this.heightOffsetUpdateTime <= 0)
+            if (heightOffsetUpdateTime <= 0)
             {
-                this.heightOffsetUpdateTime = 100;
-                this.heightOffset = 0.5F + (float)this.rand.nextGaussian() * 3.0F;
+                heightOffsetUpdateTime = 100;
+                heightOffset = 0.5F + (float)rand.nextGaussian() * 3F;
             }
 
-            if (this.getEntityToAttack() != null && this.getEntityToAttack().posY + (double)this.getEntityToAttack().getEyeHeight() > this.posY + (double)this.getEyeHeight() + (double)this.heightOffset)
+            if (getEntityToAttack() != null && getEntityToAttack().posY + (double)getEntityToAttack().getEyeHeight() > posY + (double)getEyeHeight() + (double)heightOffset)
             {
-                this.motionY += (0.30000001192092896D - this.motionY) * 0.30000001192092896D;
+                motionY += (0.30000001192092896D - motionY) * 0.30000001192092896D;
             }
         }
 
-        if (this.rand.nextInt(24) == 0)
+        if (rand.nextInt(24) == 0)
         {
-            this.worldObj.playSoundEffect(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, "fire.fire", 1.0F + this.rand.nextFloat(), this.rand.nextFloat() * 0.7F + 0.3F);
+            worldObj.playSoundEffect(posX + 0.5D, posY + 0.5D, posZ + 0.5D, "fire.fire", 1.0F + rand.nextFloat(), rand.nextFloat() * 0.7F + 0.3F);
         }
 
-        if (!this.onGround && this.motionY < 0.0D)
+        if (!onGround && motionY < 0.0D)
         {
-            this.motionY *= 0.6D;
+            motionY *= 0.59999999999999998D;
         }
 
-        for (int var1 = 0; var1 < 2; ++var1)
+        for (int i = 0; i < 2; i++)
         {
-            this.worldObj.spawnParticle("largesmoke", this.posX + (this.rand.nextDouble() - 0.5D) * (double)this.width, this.posY + this.rand.nextDouble() * (double)this.height, this.posZ + (this.rand.nextDouble() - 0.5D) * (double)this.width, 0.0D, 0.0D, 0.0D);
+            worldObj.spawnParticle("largesmoke", posX + (rand.nextDouble() - 0.5D) * (double)width, posY + rand.nextDouble() * (double)height, posZ + (rand.nextDouble() - 0.5D) * (double)width, 0.0D, 0.0D, 0.0D);
         }
 
         super.onLivingUpdate();
@@ -116,60 +119,62 @@ public class EntityBlaze extends EntityMob
      */
     protected void attackEntity(Entity par1Entity, float par2)
     {
-        if (this.attackTime <= 0 && par2 < 2.0F && par1Entity.boundingBox.maxY > this.boundingBox.minY && par1Entity.boundingBox.minY < this.boundingBox.maxY)
+        if (attackTime <= 0 && par2 < 2.0F && par1Entity.boundingBox.maxY > boundingBox.minY && par1Entity.boundingBox.minY < boundingBox.maxY)
         {
-            this.attackTime = 20;
-            this.attackEntityAsMob(par1Entity);
+            attackTime = 20;
+            attackEntityAsMob(par1Entity);
         }
-        else if (par2 < 30.0F)
+        else if (par2 < 30F)
         {
-            double var3 = par1Entity.posX - this.posX;
-            double var5 = par1Entity.boundingBox.minY + (double)(par1Entity.height / 2.0F) - (this.posY + (double)(this.height / 2.0F));
-            double var7 = par1Entity.posZ - this.posZ;
+            double d = par1Entity.posX - posX;
+            double d1 = (par1Entity.boundingBox.minY + (double)(par1Entity.height / 2.0F)) - (posY + (double)(height / 2.0F));
+            double d2 = par1Entity.posZ - posZ;
 
-            if (this.attackTime == 0)
+            if (attackTime == 0)
             {
-                ++this.field_70846_g;
+                field_70846_g++;
 
-                if (this.field_70846_g == 1)
+                if (field_70846_g == 1)
                 {
-                    this.attackTime = 60;
-                    this.func_70844_e(true);
+                    attackTime = 60;
+                    func_70844_e(true);
                 }
-                else if (this.field_70846_g <= 4)
+                else if (field_70846_g <= 4)
                 {
-                    this.attackTime = 6;
+                    attackTime = 6;
                 }
                 else
                 {
-                    this.attackTime = 100;
-                    this.field_70846_g = 0;
-                    this.func_70844_e(false);
+                    attackTime = 100;
+                    field_70846_g = 0;
+                    func_70844_e(false);
                 }
 
-                if (this.field_70846_g > 1)
+                if (field_70846_g > 1)
                 {
-                    float var9 = MathHelper.sqrt_float(par2) * 0.5F;
-                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1009, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
+                    float f = MathHelper.sqrt_float(par2) * 0.5F;
+                    worldObj.playAuxSFXAtEntity(null, 1009, (int)posX, (int)posY, (int)posZ, 0);
 
-                    for (int var10 = 0; var10 < 1; ++var10)
+                    for (int i = 0; i < 1; i++)
                     {
-                        EntitySmallFireball var11 = new EntitySmallFireball(this.worldObj, this, var3 + this.rand.nextGaussian() * (double)var9, var5, var7 + this.rand.nextGaussian() * (double)var9);
-                        var11.posY = this.posY + (double)(this.height / 2.0F) + 0.5D;
-                        this.worldObj.spawnEntityInWorld(var11);
+                        EntitySmallFireball entitysmallfireball = new EntitySmallFireball(worldObj, this, d + rand.nextGaussian() * (double)f, d1, d2 + rand.nextGaussian() * (double)f);
+                        entitysmallfireball.posY = posY + (double)(height / 2.0F) + 0.5D;
+                        worldObj.spawnEntityInWorld(entitysmallfireball);
                     }
                 }
             }
 
-            this.rotationYaw = (float)(Math.atan2(var7, var3) * 180.0D / Math.PI) - 90.0F;
-            this.hasAttacked = true;
+            rotationYaw = (float)((Math.atan2(d2, d) * 180D) / Math.PI) - 90F;
+            hasAttacked = true;
         }
     }
 
     /**
      * Called when the mob is falling. Calculates and applies fall damage.
      */
-    protected void fall(float par1) {}
+    protected void fall(float f)
+    {
+    }
 
     /**
      * Returns the item ID for the item the mob drops on death.
@@ -184,7 +189,7 @@ public class EntityBlaze extends EntityMob
      */
     public boolean isBurning()
     {
-        return this.func_70845_n();
+        return func_70845_n();
     }
 
     /**
@@ -194,34 +199,34 @@ public class EntityBlaze extends EntityMob
     {
         if (par1)
         {
-            int var3 = this.rand.nextInt(2 + par2);
+            int i = rand.nextInt(2 + par2);
 
-            for (int var4 = 0; var4 < var3; ++var4)
+            for (int j = 0; j < i; j++)
             {
-                this.dropItem(Item.blazeRod.shiftedIndex, 1);
+                dropItem(Item.blazeRod.shiftedIndex, 1);
             }
         }
     }
 
     public boolean func_70845_n()
     {
-        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
+        return (dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
     public void func_70844_e(boolean par1)
     {
-        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
+        byte byte0 = dataWatcher.getWatchableObjectByte(16);
 
         if (par1)
         {
-            var2 = (byte)(var2 | 1);
+            byte0 |= 1;
         }
         else
         {
-            var2 &= -2;
+            byte0 &= 0xfe;
         }
 
-        this.dataWatcher.updateObject(16, Byte.valueOf(var2));
+        dataWatcher.updateObject(16, Byte.valueOf(byte0));
     }
 
     /**
@@ -230,5 +235,11 @@ public class EntityBlaze extends EntityMob
     protected boolean isValidLightLevel()
     {
         return true;
+    }
+
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Blaze";
     }
 }

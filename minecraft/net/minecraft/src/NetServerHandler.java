@@ -1,672 +1,655 @@
 package net.minecraft.src;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Random;
+import java.io.*;
+import java.util.*;
 import java.util.logging.Logger;
+
+import cartasiane.spells.Spell;
+import cartasiane.spells.packets.Packet150TargetInfos;
+import cartasiane.spells.packets.Packet151Spell;
 import net.minecraft.server.MinecraftServer;
 
 public class NetServerHandler extends NetHandler
 {
-    /** The logging system. */
-    public static Logger logger = Logger.getLogger("Minecraft");
-    public NetworkManager theNetworkManager;
-    public boolean serverShuttingDown = false;
-
-    /** Reference to the MinecraftServer object. */
-    private MinecraftServer mcServer;
-
-    /** Reference to the EntityPlayerMP object. */
-    private EntityPlayerMP playerEntity;
-
-    /** incremented each tick */
-    private int currentTicks;
-
-    /**
-     * player is kicked if they float for over 80 ticks without flying enabled
-     */
-    private int ticksForFloatKick;
+    public static Logger field_72577_a = Logger.getLogger("Minecraft");
+    public NetworkManager field_72575_b;
+    public boolean field_72576_c;
+    private MinecraftServer field_72573_d;
+    private EntityPlayerMP field_72574_e;
+    private int field_72571_f;
+    private int field_72572_g;
     private boolean field_72584_h;
-    private int keepAliveRandomID;
-    private long keepAliveTimeSent;
-    private static Random randomGenerator = new Random();
-    private long ticksOfLastKeepAlive;
-    private int chatSpamThresholdCount = 0;
-    private int creativeItemCreationSpamThresholdTally = 0;
-
-    /** The last known x position for this connection. */
-    private double lastPosX;
-
-    /** The last known y position for this connection. */
-    private double lastPosY;
-
-    /** The last known z position for this connection. */
-    private double lastPosZ;
-    private boolean field_72587_r = true;
-    private IntHashMap field_72586_s = new IntHashMap();
+    private int field_72585_i;
+    private long field_72582_j;
+    private static Random field_72583_k = new Random();
+    private long field_72580_l;
+    private int field_72581_m;
+    private int field_72578_n;
+    private double field_72579_o;
+    private double field_72589_p;
+    private double field_72588_q;
+    private boolean field_72587_r;
+    private IntHashMap field_72586_s;
 
     public NetServerHandler(MinecraftServer par1MinecraftServer, NetworkManager par2NetworkManager, EntityPlayerMP par3EntityPlayerMP)
     {
-        this.mcServer = par1MinecraftServer;
-        this.theNetworkManager = par2NetworkManager;
-        par2NetworkManager.setNetHandler(this);
-        this.playerEntity = par3EntityPlayerMP;
-        par3EntityPlayerMP.serverForThisPlayer = this;
+        field_72576_c = false;
+        field_72581_m = 0;
+        field_72578_n = 0;
+        field_72587_r = true;
+        field_72586_s = new IntHashMap();
+        field_72573_d = par1MinecraftServer;
+        field_72575_b = par2NetworkManager;
+        par2NetworkManager.func_74425_a(this);
+        field_72574_e = par3EntityPlayerMP;
+        par3EntityPlayerMP.netHandler = this;
     }
 
-    /**
-     * run once each game tick
-     */
-    public void networkTick()
+    public void func_72570_d()
     {
-        this.field_72584_h = false;
-        ++this.currentTicks;
-        this.mcServer.theProfiler.startSection("packetflow");
-        this.theNetworkManager.processReadPackets();
-        this.mcServer.theProfiler.endStartSection("keepAlive");
+        field_72584_h = false;
+        field_72571_f++;
+        field_72573_d.field_71304_b.startSection("packetflow");
+        field_72575_b.processReadPackets();
+        field_72573_d.field_71304_b.endStartSection("keepAlive");
 
-        if ((long)this.currentTicks - this.ticksOfLastKeepAlive > 20L)
+        if ((long)field_72571_f - field_72580_l > 20L)
         {
-            this.ticksOfLastKeepAlive = (long)this.currentTicks;
-            this.keepAliveTimeSent = System.nanoTime() / 1000000L;
-            this.keepAliveRandomID = randomGenerator.nextInt();
-            this.sendPacketToPlayer(new Packet0KeepAlive(this.keepAliveRandomID));
+            field_72580_l = field_72571_f;
+            field_72582_j = System.nanoTime() / 0xf4240L;
+            field_72585_i = field_72583_k.nextInt();
+            func_72567_b(new Packet0KeepAlive(field_72585_i));
         }
 
-        if (this.chatSpamThresholdCount > 0)
+        if (field_72581_m > 0)
         {
-            --this.chatSpamThresholdCount;
+            field_72581_m--;
         }
 
-        if (this.creativeItemCreationSpamThresholdTally > 0)
+        if (field_72578_n > 0)
         {
-            --this.creativeItemCreationSpamThresholdTally;
+            field_72578_n--;
         }
 
-        this.mcServer.theProfiler.endStartSection("playerTick");
+        field_72573_d.field_71304_b.endStartSection("playerTick");
 
-        if (!this.field_72584_h && !this.playerEntity.playerHasConqueredTheEnd)
+        if (!field_72584_h && !field_72574_e.field_71136_j)
         {
-            this.playerEntity.onUpdateEntity();
+            field_72574_e.func_71127_g();
         }
 
-        this.mcServer.theProfiler.endSection();
+        field_72573_d.field_71304_b.endSection();
     }
 
-    public void kickPlayerFromServer(String par1Str)
+    public void func_72565_c(String par1Str)
     {
-        if (!this.serverShuttingDown)
+        if (field_72576_c)
         {
-            this.playerEntity.mountEntityAndWakeUp();
-            this.sendPacketToPlayer(new Packet255KickDisconnect(par1Str));
-            this.theNetworkManager.serverShutdown();
-            this.mcServer.getConfigurationManager().sendPacketToAllPlayers(new Packet3Chat("\u00a7e" + this.playerEntity.username + " left the game."));
-            this.mcServer.getConfigurationManager().func_72367_e(this.playerEntity);
-            this.serverShuttingDown = true;
+            return;
+        }
+        else
+        {
+            field_72574_e.func_71123_m();
+            func_72567_b(new Packet255KickDisconnect(par1Str));
+            field_72575_b.serverShutdown();
+            field_72573_d.func_71203_ab().func_72384_a(new Packet3Chat((new StringBuilder()).append("\247e").append(field_72574_e.username).append(" left the game.").toString()));
+            field_72573_d.func_71203_ab().func_72367_e(field_72574_e);
+            field_72576_c = true;
+            return;
         }
     }
 
     public void handleFlying(Packet10Flying par1Packet10Flying)
     {
-        WorldServer var2 = this.mcServer.worldServerForDimension(this.playerEntity.dimension);
-        this.field_72584_h = true;
+        WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+        field_72584_h = true;
 
-        if (!this.playerEntity.playerHasConqueredTheEnd)
+        if (field_72574_e.field_71136_j)
         {
-            double var3;
+            return;
+        }
 
-            if (!this.field_72587_r)
+        if (!field_72587_r)
+        {
+            double d = par1Packet10Flying.yPosition - field_72589_p;
+
+            if (par1Packet10Flying.xPosition == field_72579_o && d * d < 0.01D && par1Packet10Flying.zPosition == field_72588_q)
             {
-                var3 = par1Packet10Flying.yPosition - this.lastPosY;
-
-                if (par1Packet10Flying.xPosition == this.lastPosX && var3 * var3 < 0.01D && par1Packet10Flying.zPosition == this.lastPosZ)
-                {
-                    this.field_72587_r = true;
-                }
+                field_72587_r = true;
             }
+        }
 
-            if (this.field_72587_r)
+        if (field_72587_r)
+        {
+            if (field_72574_e.ridingEntity != null)
             {
-                double var5;
-                double var7;
-                double var9;
-                double var13;
-
-                if (this.playerEntity.ridingEntity != null)
-                {
-                    float var34 = this.playerEntity.rotationYaw;
-                    float var4 = this.playerEntity.rotationPitch;
-                    this.playerEntity.ridingEntity.updateRiderPosition();
-                    var5 = this.playerEntity.posX;
-                    var7 = this.playerEntity.posY;
-                    var9 = this.playerEntity.posZ;
-                    double var35 = 0.0D;
-                    var13 = 0.0D;
-
-                    if (par1Packet10Flying.rotating)
-                    {
-                        var34 = par1Packet10Flying.yaw;
-                        var4 = par1Packet10Flying.pitch;
-                    }
-
-                    if (par1Packet10Flying.moving && par1Packet10Flying.yPosition == -999.0D && par1Packet10Flying.stance == -999.0D)
-                    {
-                        if (par1Packet10Flying.xPosition > 1.0D || par1Packet10Flying.zPosition > 1.0D)
-                        {
-                            System.err.println(this.playerEntity.username + " was caught trying to crash the server with an invalid position.");
-                            this.kickPlayerFromServer("Nope!");
-                            return;
-                        }
-
-                        var35 = par1Packet10Flying.xPosition;
-                        var13 = par1Packet10Flying.zPosition;
-                    }
-
-                    this.playerEntity.onGround = par1Packet10Flying.onGround;
-                    this.playerEntity.onUpdateEntity();
-                    this.playerEntity.moveEntity(var35, 0.0D, var13);
-                    this.playerEntity.setPositionAndRotation(var5, var7, var9, var34, var4);
-                    this.playerEntity.motionX = var35;
-                    this.playerEntity.motionZ = var13;
-
-                    if (this.playerEntity.ridingEntity != null)
-                    {
-                        var2.uncheckedUpdateEntity(this.playerEntity.ridingEntity, true);
-                    }
-
-                    if (this.playerEntity.ridingEntity != null)
-                    {
-                        this.playerEntity.ridingEntity.updateRiderPosition();
-                    }
-
-                    this.mcServer.getConfigurationManager().func_72358_d(this.playerEntity);
-                    this.lastPosX = this.playerEntity.posX;
-                    this.lastPosY = this.playerEntity.posY;
-                    this.lastPosZ = this.playerEntity.posZ;
-                    var2.updateEntity(this.playerEntity);
-                    return;
-                }
-
-                if (this.playerEntity.isPlayerSleeping())
-                {
-                    this.playerEntity.onUpdateEntity();
-                    this.playerEntity.setPositionAndRotation(this.lastPosX, this.lastPosY, this.lastPosZ, this.playerEntity.rotationYaw, this.playerEntity.rotationPitch);
-                    var2.updateEntity(this.playerEntity);
-                    return;
-                }
-
-                var3 = this.playerEntity.posY;
-                this.lastPosX = this.playerEntity.posX;
-                this.lastPosY = this.playerEntity.posY;
-                this.lastPosZ = this.playerEntity.posZ;
-                var5 = this.playerEntity.posX;
-                var7 = this.playerEntity.posY;
-                var9 = this.playerEntity.posZ;
-                float var11 = this.playerEntity.rotationYaw;
-                float var12 = this.playerEntity.rotationPitch;
-
-                if (par1Packet10Flying.moving && par1Packet10Flying.yPosition == -999.0D && par1Packet10Flying.stance == -999.0D)
-                {
-                    par1Packet10Flying.moving = false;
-                }
-
-                if (par1Packet10Flying.moving)
-                {
-                    var5 = par1Packet10Flying.xPosition;
-                    var7 = par1Packet10Flying.yPosition;
-                    var9 = par1Packet10Flying.zPosition;
-                    var13 = par1Packet10Flying.stance - par1Packet10Flying.yPosition;
-
-                    if (!this.playerEntity.isPlayerSleeping() && (var13 > 1.65D || var13 < 0.1D))
-                    {
-                        this.kickPlayerFromServer("Illegal stance");
-                        logger.warning(this.playerEntity.username + " had an illegal stance: " + var13);
-                        return;
-                    }
-
-                    if (Math.abs(par1Packet10Flying.xPosition) > 3.2E7D || Math.abs(par1Packet10Flying.zPosition) > 3.2E7D)
-                    {
-                        this.kickPlayerFromServer("Illegal position");
-                        return;
-                    }
-                }
+                float f = field_72574_e.rotationYaw;
+                float f1 = field_72574_e.rotationPitch;
+                field_72574_e.ridingEntity.updateRiderPosition();
+                double d2 = field_72574_e.posX;
+                double d4 = field_72574_e.posY;
+                double d6 = field_72574_e.posZ;
+                double d8 = 0.0D;
+                double d9 = 0.0D;
 
                 if (par1Packet10Flying.rotating)
                 {
-                    var11 = par1Packet10Flying.yaw;
-                    var12 = par1Packet10Flying.pitch;
+                    f = par1Packet10Flying.yaw;
+                    f1 = par1Packet10Flying.pitch;
                 }
 
-                this.playerEntity.onUpdateEntity();
-                this.playerEntity.ySize = 0.0F;
-                this.playerEntity.setPositionAndRotation(this.lastPosX, this.lastPosY, this.lastPosZ, var11, var12);
-
-                if (!this.field_72587_r)
+                if (par1Packet10Flying.moving && par1Packet10Flying.yPosition == -999D && par1Packet10Flying.stance == -999D)
                 {
-                    return;
-                }
-
-                var13 = var5 - this.playerEntity.posX;
-                double var15 = var7 - this.playerEntity.posY;
-                double var17 = var9 - this.playerEntity.posZ;
-                double var19 = Math.min(Math.abs(var13), Math.abs(this.playerEntity.motionX));
-                double var21 = Math.min(Math.abs(var15), Math.abs(this.playerEntity.motionY));
-                double var23 = Math.min(Math.abs(var17), Math.abs(this.playerEntity.motionZ));
-                double var25 = var19 * var19 + var21 * var21 + var23 * var23;
-
-                if (var25 > 100.0D && (!this.mcServer.isSinglePlayer() || !this.mcServer.getServerOwner().equals(this.playerEntity.username)))
-                {
-                    logger.warning(this.playerEntity.username + " moved too quickly! " + var13 + "," + var15 + "," + var17 + " (" + var19 + ", " + var21 + ", " + var23 + ")");
-                    this.setPlayerLocation(this.lastPosX, this.lastPosY, this.lastPosZ, this.playerEntity.rotationYaw, this.playerEntity.rotationPitch);
-                    return;
-                }
-
-                float var27 = 0.0625F;
-                boolean var28 = var2.getCollidingBoundingBoxes(this.playerEntity, this.playerEntity.boundingBox.copy().contract((double)var27, (double)var27, (double)var27)).isEmpty();
-
-                if (this.playerEntity.onGround && !par1Packet10Flying.onGround && var15 > 0.0D)
-                {
-                    this.playerEntity.addExhaustion(0.2F);
-                }
-
-                this.playerEntity.moveEntity(var13, var15, var17);
-                this.playerEntity.onGround = par1Packet10Flying.onGround;
-                this.playerEntity.addMovementStat(var13, var15, var17);
-                double var29 = var15;
-                var13 = var5 - this.playerEntity.posX;
-                var15 = var7 - this.playerEntity.posY;
-
-                if (var15 > -0.5D || var15 < 0.5D)
-                {
-                    var15 = 0.0D;
-                }
-
-                var17 = var9 - this.playerEntity.posZ;
-                var25 = var13 * var13 + var15 * var15 + var17 * var17;
-                boolean var31 = false;
-
-                if (var25 > 0.0625D && !this.playerEntity.isPlayerSleeping() && !this.playerEntity.theItemInWorldManager.isCreative())
-                {
-                    var31 = true;
-                    logger.warning(this.playerEntity.username + " moved wrongly!");
-                }
-
-                this.playerEntity.setPositionAndRotation(var5, var7, var9, var11, var12);
-                boolean var32 = var2.getCollidingBoundingBoxes(this.playerEntity, this.playerEntity.boundingBox.copy().contract((double)var27, (double)var27, (double)var27)).isEmpty();
-
-                if (var28 && (var31 || !var32) && !this.playerEntity.isPlayerSleeping())
-                {
-                    this.setPlayerLocation(this.lastPosX, this.lastPosY, this.lastPosZ, var11, var12);
-                    return;
-                }
-
-                AxisAlignedBB var33 = this.playerEntity.boundingBox.copy().expand((double)var27, (double)var27, (double)var27).addCoord(0.0D, -0.55D, 0.0D);
-
-                if (!this.mcServer.isFlightAllowed() && !this.playerEntity.theItemInWorldManager.isCreative() && !var2.isAABBNonEmpty(var33))
-                {
-                    if (var29 >= -0.03125D)
+                    if (par1Packet10Flying.xPosition > 1.0D || par1Packet10Flying.zPosition > 1.0D)
                     {
-                        ++this.ticksForFloatKick;
-
-                        if (this.ticksForFloatKick > 80)
-                        {
-                            logger.warning(this.playerEntity.username + " was kicked for floating too long!");
-                            this.kickPlayerFromServer("Flying is not enabled on this server");
-                            return;
-                        }
+                        System.err.println((new StringBuilder()).append(field_72574_e.username).append(" was caught trying to crash the server with an invalid position.").toString());
+                        func_72565_c("Nope!");
+                        return;
                     }
+
+                    d8 = par1Packet10Flying.xPosition;
+                    d9 = par1Packet10Flying.zPosition;
                 }
-                else
+
+                field_72574_e.onGround = par1Packet10Flying.onGround;
+                field_72574_e.func_71127_g();
+                field_72574_e.moveEntity(d8, 0.0D, d9);
+                field_72574_e.setPositionAndRotation(d2, d4, d6, f, f1);
+                field_72574_e.motionX = d8;
+                field_72574_e.motionZ = d9;
+
+                if (field_72574_e.ridingEntity != null)
                 {
-                    this.ticksForFloatKick = 0;
+                    worldserver.func_73050_b(field_72574_e.ridingEntity, true);
                 }
 
-                this.playerEntity.onGround = par1Packet10Flying.onGround;
-                this.mcServer.getConfigurationManager().func_72358_d(this.playerEntity);
-                this.playerEntity.updateFlyingState(this.playerEntity.posY - var3, par1Packet10Flying.onGround);
-            }
-        }
-    }
-
-    public void setPlayerLocation(double par1, double par3, double par5, float par7, float par8)
-    {
-        this.field_72587_r = false;
-        this.lastPosX = par1;
-        this.lastPosY = par3;
-        this.lastPosZ = par5;
-        this.playerEntity.setPositionAndRotation(par1, par3, par5, par7, par8);
-        this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet13PlayerLookMove(par1, par3 + 1.6200000047683716D, par3, par5, par7, par8, false));
-    }
-
-    public void handleBlockDig(Packet14BlockDig par1Packet14BlockDig)
-    {
-        WorldServer var2 = this.mcServer.worldServerForDimension(this.playerEntity.dimension);
-
-        if (par1Packet14BlockDig.status == 4)
-        {
-            this.playerEntity.dropOneItem();
-        }
-        else if (par1Packet14BlockDig.status == 5)
-        {
-            this.playerEntity.stopUsingItem();
-        }
-        else
-        {
-            boolean var3 = var2.actionsAllowed = var2.provider.worldType != 0 || this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username) || this.mcServer.isSinglePlayer();
-            boolean var4 = false;
-
-            if (par1Packet14BlockDig.status == 0)
-            {
-                var4 = true;
-            }
-
-            if (par1Packet14BlockDig.status == 2)
-            {
-                var4 = true;
-            }
-
-            int var5 = par1Packet14BlockDig.xPosition;
-            int var6 = par1Packet14BlockDig.yPosition;
-            int var7 = par1Packet14BlockDig.zPosition;
-
-            if (var4)
-            {
-                double var8 = this.playerEntity.posX - ((double)var5 + 0.5D);
-                double var10 = this.playerEntity.posY - ((double)var6 + 0.5D) + 1.5D;
-                double var12 = this.playerEntity.posZ - ((double)var7 + 0.5D);
-                double var14 = var8 * var8 + var10 * var10 + var12 * var12;
-
-                if (var14 > 36.0D)
+                if (field_72574_e.ridingEntity != null)
                 {
+                    field_72574_e.ridingEntity.updateRiderPosition();
+                }
+
+                field_72573_d.func_71203_ab().func_72358_d(field_72574_e);
+                field_72579_o = field_72574_e.posX;
+                field_72589_p = field_72574_e.posY;
+                field_72588_q = field_72574_e.posZ;
+                worldserver.updateEntity(field_72574_e);
+                return;
+            }
+
+            if (field_72574_e.isPlayerSleeping())
+            {
+                field_72574_e.func_71127_g();
+                field_72574_e.setPositionAndRotation(field_72579_o, field_72589_p, field_72588_q, field_72574_e.rotationYaw, field_72574_e.rotationPitch);
+                worldserver.updateEntity(field_72574_e);
+                return;
+            }
+
+            double d1 = field_72574_e.posY;
+            field_72579_o = field_72574_e.posX;
+            field_72589_p = field_72574_e.posY;
+            field_72588_q = field_72574_e.posZ;
+            double d3 = field_72574_e.posX;
+            double d5 = field_72574_e.posY;
+            double d7 = field_72574_e.posZ;
+            float f2 = field_72574_e.rotationYaw;
+            float f3 = field_72574_e.rotationPitch;
+
+            if (par1Packet10Flying.moving && par1Packet10Flying.yPosition == -999D && par1Packet10Flying.stance == -999D)
+            {
+                par1Packet10Flying.moving = false;
+            }
+
+            if (par1Packet10Flying.moving)
+            {
+                d3 = par1Packet10Flying.xPosition;
+                d5 = par1Packet10Flying.yPosition;
+                d7 = par1Packet10Flying.zPosition;
+                double d10 = par1Packet10Flying.stance - par1Packet10Flying.yPosition;
+
+                if (!field_72574_e.isPlayerSleeping() && (d10 > 1.6499999999999999D || d10 < 0.10000000000000001D))
+                {
+                    func_72565_c("Illegal stance");
+                    field_72577_a.warning((new StringBuilder()).append(field_72574_e.username).append(" had an illegal stance: ").append(d10).toString());
                     return;
                 }
 
-                if (var6 >= this.mcServer.getBuildLimit())
+                if (Math.abs(par1Packet10Flying.xPosition) > 32000000D || Math.abs(par1Packet10Flying.zPosition) > 32000000D)
                 {
+                    func_72565_c("Illegal position");
                     return;
                 }
             }
 
-            ChunkCoordinates var19 = var2.getSpawnPoint();
-            int var9 = MathHelper.abs_int(var5 - var19.posX);
-            int var20 = MathHelper.abs_int(var7 - var19.posZ);
-
-            if (var9 > var20)
+            if (par1Packet10Flying.rotating)
             {
-                var20 = var9;
+                f2 = par1Packet10Flying.yaw;
+                f3 = par1Packet10Flying.pitch;
             }
 
-            if (par1Packet14BlockDig.status == 0)
-            {
-                if (var20 <= 16 && !var3)
-                {
-                    this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
-                }
-                else
-                {
-                    this.playerEntity.theItemInWorldManager.onBlockClicked(var5, var6, var7, par1Packet14BlockDig.face);
-                }
-            }
-            else if (par1Packet14BlockDig.status == 2)
-            {
-                this.playerEntity.theItemInWorldManager.uncheckedTryHarvestBlock(var5, var6, var7);
+            field_72574_e.func_71127_g();
+            field_72574_e.ySize = 0.0F;
+            field_72574_e.setPositionAndRotation(field_72579_o, field_72589_p, field_72588_q, f2, f3);
 
-                if (var2.getBlockId(var5, var6, var7) != 0)
-                {
-                    this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
-                }
-            }
-            else if (par1Packet14BlockDig.status == 1)
-            {
-                this.playerEntity.theItemInWorldManager.destroyBlockInWorldPartially(var5, var6, var7);
-
-                if (var2.getBlockId(var5, var6, var7) != 0)
-                {
-                    this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
-                }
-            }
-            else if (par1Packet14BlockDig.status == 3)
-            {
-                double var11 = this.playerEntity.posX - ((double)var5 + 0.5D);
-                double var13 = this.playerEntity.posY - ((double)var6 + 0.5D);
-                double var15 = this.playerEntity.posZ - ((double)var7 + 0.5D);
-                double var17 = var11 * var11 + var13 * var13 + var15 * var15;
-
-                if (var17 < 256.0D)
-                {
-                    this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
-                }
-            }
-
-            var2.actionsAllowed = false;
-        }
-    }
-
-    public void handlePlace(Packet15Place par1Packet15Place)
-    {
-        WorldServer var2 = this.mcServer.worldServerForDimension(this.playerEntity.dimension);
-        ItemStack var3 = this.playerEntity.inventory.getCurrentItem();
-        boolean var4 = false;
-        int var5 = par1Packet15Place.getXPosition();
-        int var6 = par1Packet15Place.getYPosition();
-        int var7 = par1Packet15Place.getZPosition();
-        int var8 = par1Packet15Place.getDirection();
-        boolean var9 = var2.actionsAllowed = var2.provider.worldType != 0 || this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username) || this.mcServer.isSinglePlayer();
-
-        if (par1Packet15Place.getDirection() == 255)
-        {
-            if (var3 == null)
+            if (!field_72587_r)
             {
                 return;
             }
 
-            this.playerEntity.theItemInWorldManager.tryUseItem(this.playerEntity, var2, var3);
+            double d11 = d3 - field_72574_e.posX;
+            double d12 = d5 - field_72574_e.posY;
+            double d13 = d7 - field_72574_e.posZ;
+            double d14 = Math.min(Math.abs(d11), Math.abs(field_72574_e.motionX));
+            double d15 = Math.min(Math.abs(d12), Math.abs(field_72574_e.motionY));
+            double d16 = Math.min(Math.abs(d13), Math.abs(field_72574_e.motionZ));
+            double d17 = d14 * d14 + d15 * d15 + d16 * d16;
+
+            if (d17 > 100D && (!field_72573_d.func_71264_H() || !field_72573_d.func_71214_G().equals(field_72574_e.username)))
+            {
+                field_72577_a.warning((new StringBuilder()).append(field_72574_e.username).append(" moved too quickly! ").append(d11).append(",").append(d12).append(",").append(d13).append(" (").append(d14).append(", ").append(d15).append(", ").append(d16).append(")").toString());
+                func_72569_a(field_72579_o, field_72589_p, field_72588_q, field_72574_e.rotationYaw, field_72574_e.rotationPitch);
+                return;
+            }
+
+            float f4 = 0.0625F;
+            boolean flag = worldserver.getCollidingBoundingBoxes(field_72574_e, field_72574_e.boundingBox.copy().contract(f4, f4, f4)).isEmpty();
+
+            if (field_72574_e.onGround && !par1Packet10Flying.onGround && d12 > 0.0D)
+            {
+                field_72574_e.addExhaustion(0.2F);
+            }
+
+            field_72574_e.moveEntity(d11, d12, d13);
+            field_72574_e.onGround = par1Packet10Flying.onGround;
+            field_72574_e.addMovementStat(d11, d12, d13);
+            double d18 = d12;
+            d11 = d3 - field_72574_e.posX;
+            d12 = d5 - field_72574_e.posY;
+
+            if (d12 > -0.5D || d12 < 0.5D)
+            {
+                d12 = 0.0D;
+            }
+
+            d13 = d7 - field_72574_e.posZ;
+            d17 = d11 * d11 + d12 * d12 + d13 * d13;
+            boolean flag1 = false;
+
+            if (d17 > 0.0625D && !field_72574_e.isPlayerSleeping() && !field_72574_e.field_71134_c.func_73083_d())
+            {
+                flag1 = true;
+                field_72577_a.warning((new StringBuilder()).append(field_72574_e.username).append(" moved wrongly!").toString());
+            }
+
+            field_72574_e.setPositionAndRotation(d3, d5, d7, f2, f3);
+            boolean flag2 = worldserver.getCollidingBoundingBoxes(field_72574_e, field_72574_e.boundingBox.copy().contract(f4, f4, f4)).isEmpty();
+
+            if (flag && (flag1 || !flag2) && !field_72574_e.isPlayerSleeping())
+            {
+                func_72569_a(field_72579_o, field_72589_p, field_72588_q, f2, f3);
+                return;
+            }
+
+            AxisAlignedBB axisalignedbb = field_72574_e.boundingBox.copy().expand(f4, f4, f4).addCoord(0.0D, -0.55000000000000004D, 0.0D);
+
+            if (!field_72573_d.func_71231_X() && !field_72574_e.field_71134_c.func_73083_d() && !worldserver.func_72829_c(axisalignedbb))
+            {
+                if (d18 >= -0.03125D)
+                {
+                    field_72572_g++;
+
+                    if (field_72572_g > 80)
+                    {
+                        field_72577_a.warning((new StringBuilder()).append(field_72574_e.username).append(" was kicked for floating too long!").toString());
+                        func_72565_c("Flying is not enabled on this server");
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                field_72572_g = 0;
+            }
+
+            field_72574_e.onGround = par1Packet10Flying.onGround;
+            field_72573_d.func_71203_ab().func_72358_d(field_72574_e);
+            field_72574_e.func_71122_b(field_72574_e.posY - d1, par1Packet10Flying.onGround);
         }
-        else if (par1Packet15Place.getYPosition() >= this.mcServer.getBuildLimit() - 1 && (par1Packet15Place.getDirection() == 1 || par1Packet15Place.getYPosition() >= this.mcServer.getBuildLimit()))
+    }
+
+    public void func_72569_a(double par1, double par3, double par5, float par7, float par8)
+    {
+        field_72587_r = false;
+        field_72579_o = par1;
+        field_72589_p = par3;
+        field_72588_q = par5;
+        field_72574_e.setPositionAndRotation(par1, par3, par5, par7, par8);
+        field_72574_e.netHandler.func_72567_b(new Packet13PlayerLookMove(par1, par3 + 1.6200000047683716D, par3, par5, par7, par8, false));
+    }
+
+    public void handleBlockDig(Packet14BlockDig par1Packet14BlockDig)
+    {
+        WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+
+        if (par1Packet14BlockDig.status == 4)
         {
-            this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet3Chat("\u00a77Height limit for building is " + this.mcServer.getBuildLimit()));
-            var4 = true;
+            field_72574_e.dropOneItem();
+            return;
+        }
+
+        if (par1Packet14BlockDig.status == 5)
+        {
+            field_72574_e.stopUsingItem();
+            return;
+        }
+
+        boolean flag = worldserver.field_73060_c = worldserver.worldProvider.worldType != 0 || field_72573_d.func_71203_ab().func_72353_e(field_72574_e.username) || field_72573_d.func_71264_H();
+        boolean flag1 = false;
+
+        if (par1Packet14BlockDig.status == 0)
+        {
+            flag1 = true;
+        }
+
+        if (par1Packet14BlockDig.status == 2)
+        {
+            flag1 = true;
+        }
+
+        int i = par1Packet14BlockDig.xPosition;
+        int j = par1Packet14BlockDig.yPosition;
+        int k = par1Packet14BlockDig.zPosition;
+
+        if (flag1)
+        {
+            double d = field_72574_e.posX - ((double)i + 0.5D);
+            double d1 = (field_72574_e.posY - ((double)j + 0.5D)) + 1.5D;
+            double d3 = field_72574_e.posZ - ((double)k + 0.5D);
+            double d5 = d * d + d1 * d1 + d3 * d3;
+
+            if (d5 > 36D)
+            {
+                return;
+            }
+
+            if (j >= field_72573_d.func_71207_Z())
+            {
+                return;
+            }
+        }
+
+        ChunkCoordinates chunkcoordinates = worldserver.getSpawnPoint();
+        int l = MathHelper.func_76130_a(i - chunkcoordinates.posX);
+        int i1 = MathHelper.func_76130_a(k - chunkcoordinates.posZ);
+
+        if (l > i1)
+        {
+            i1 = l;
+        }
+
+        if (par1Packet14BlockDig.status == 0)
+        {
+            if (i1 > 16 || flag)
+            {
+                field_72574_e.field_71134_c.func_73074_a(i, j, k, par1Packet14BlockDig.face);
+            }
+            else
+            {
+                field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
+            }
+        }
+        else if (par1Packet14BlockDig.status == 2)
+        {
+            field_72574_e.field_71134_c.func_73082_a(i, j, k);
+
+            if (worldserver.getBlockId(i, j, k) != 0)
+            {
+                field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
+            }
+        }
+        else if (par1Packet14BlockDig.status == 1)
+        {
+            field_72574_e.field_71134_c.func_73073_c(i, j, k);
+
+            if (worldserver.getBlockId(i, j, k) != 0)
+            {
+                field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
+            }
+        }
+        else if (par1Packet14BlockDig.status == 3)
+        {
+            double d2 = field_72574_e.posX - ((double)i + 0.5D);
+            double d4 = field_72574_e.posY - ((double)j + 0.5D);
+            double d6 = field_72574_e.posZ - ((double)k + 0.5D);
+            double d7 = d2 * d2 + d4 * d4 + d6 * d6;
+
+            if (d7 < 256D)
+            {
+                field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
+            }
+        }
+
+        worldserver.field_73060_c = false;
+    }
+
+    public void handlePlace(Packet15Place par1Packet15Place)
+    {
+        WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+        ItemStack itemstack = field_72574_e.inventory.getCurrentItem();
+        boolean flag = false;
+        int i = par1Packet15Place.func_73403_d();
+        int j = par1Packet15Place.func_73402_f();
+        int k = par1Packet15Place.func_73407_g();
+        int l = par1Packet15Place.func_73401_h();
+        boolean flag1 = worldserver.field_73060_c = worldserver.worldProvider.worldType != 0 || field_72573_d.func_71203_ab().func_72353_e(field_72574_e.username) || field_72573_d.func_71264_H();
+
+        if (par1Packet15Place.func_73401_h() == 255)
+        {
+            if (itemstack == null)
+            {
+                return;
+            }
+
+            field_72574_e.field_71134_c.func_73085_a(field_72574_e, worldserver, itemstack);
+        }
+        else if (par1Packet15Place.func_73402_f() < field_72573_d.func_71207_Z() - 1 || par1Packet15Place.func_73401_h() != 1 && par1Packet15Place.func_73402_f() < field_72573_d.func_71207_Z())
+        {
+            ChunkCoordinates chunkcoordinates = worldserver.getSpawnPoint();
+            int i1 = MathHelper.func_76130_a(i - chunkcoordinates.posX);
+            int j1 = MathHelper.func_76130_a(k - chunkcoordinates.posZ);
+
+            if (i1 > j1)
+            {
+                j1 = i1;
+            }
+
+            if (field_72587_r && field_72574_e.getDistanceSq((double)i + 0.5D, (double)j + 0.5D, (double)k + 0.5D) < 64D && (j1 > 16 || flag1))
+            {
+                field_72574_e.field_71134_c.func_73078_a(field_72574_e, worldserver, itemstack, i, j, k, l, par1Packet15Place.func_73406_j(), par1Packet15Place.func_73404_l(), par1Packet15Place.func_73408_m());
+            }
+
+            flag = true;
         }
         else
         {
-            ChunkCoordinates var10 = var2.getSpawnPoint();
-            int var11 = MathHelper.abs_int(var5 - var10.posX);
-            int var12 = MathHelper.abs_int(var7 - var10.posZ);
-
-            if (var11 > var12)
-            {
-                var12 = var11;
-            }
-
-            if (this.field_72587_r && this.playerEntity.getDistanceSq((double)var5 + 0.5D, (double)var6 + 0.5D, (double)var7 + 0.5D) < 64.0D && (var12 > 16 || var9))
-            {
-                this.playerEntity.theItemInWorldManager.activateBlockOrUseItem(this.playerEntity, var2, var3, var5, var6, var7, var8, par1Packet15Place.getXOffset(), par1Packet15Place.getYOffset(), par1Packet15Place.getZOffset());
-            }
-
-            var4 = true;
+            field_72574_e.netHandler.func_72567_b(new Packet3Chat((new StringBuilder()).append("\2477Height limit for building is ").append(field_72573_d.func_71207_Z()).toString()));
+            flag = true;
         }
 
-        if (var4)
+        if (flag)
         {
-            this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
+            field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
 
-            if (var8 == 0)
+            if (l == 0)
             {
-                --var6;
+                j--;
             }
 
-            if (var8 == 1)
+            if (l == 1)
             {
-                ++var6;
+                j++;
             }
 
-            if (var8 == 2)
+            if (l == 2)
             {
-                --var7;
+                k--;
             }
 
-            if (var8 == 3)
+            if (l == 3)
             {
-                ++var7;
+                k++;
             }
 
-            if (var8 == 4)
+            if (l == 4)
             {
-                --var5;
+                i--;
             }
 
-            if (var8 == 5)
+            if (l == 5)
             {
-                ++var5;
+                i++;
             }
 
-            this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet53BlockChange(var5, var6, var7, var2));
+            field_72574_e.netHandler.func_72567_b(new Packet53BlockChange(i, j, k, worldserver));
         }
 
-        var3 = this.playerEntity.inventory.getCurrentItem();
+        itemstack = field_72574_e.inventory.getCurrentItem();
 
-        if (var3 != null && var3.stackSize == 0)
+        if (itemstack != null && itemstack.stackSize == 0)
         {
-            this.playerEntity.inventory.mainInventory[this.playerEntity.inventory.currentItem] = null;
-            var3 = null;
+            field_72574_e.inventory.mainInventory[field_72574_e.inventory.currentItem] = null;
+            itemstack = null;
         }
 
-        if (var3 == null || var3.getMaxItemUseDuration() == 0)
+        if (itemstack == null || itemstack.getMaxItemUseDuration() == 0)
         {
-            this.playerEntity.playerInventoryBeingManipulated = true;
-            this.playerEntity.inventory.mainInventory[this.playerEntity.inventory.currentItem] = ItemStack.copyItemStack(this.playerEntity.inventory.mainInventory[this.playerEntity.inventory.currentItem]);
-            Slot var13 = this.playerEntity.craftingInventory.getSlotFromInventory(this.playerEntity.inventory, this.playerEntity.inventory.currentItem);
-            this.playerEntity.craftingInventory.updateCraftingResults();
-            this.playerEntity.playerInventoryBeingManipulated = false;
+            field_72574_e.field_71137_h = true;
+            field_72574_e.inventory.mainInventory[field_72574_e.inventory.currentItem] = ItemStack.copyItemStack(field_72574_e.inventory.mainInventory[field_72574_e.inventory.currentItem]);
+            Slot slot = field_72574_e.craftingInventory.func_75147_a(field_72574_e.inventory, field_72574_e.inventory.currentItem);
+            field_72574_e.craftingInventory.updateCraftingResults();
+            field_72574_e.field_71137_h = false;
 
-            if (!ItemStack.areItemStacksEqual(this.playerEntity.inventory.getCurrentItem(), par1Packet15Place.getItemStack()))
+            if (!ItemStack.areItemStacksEqual(field_72574_e.inventory.getCurrentItem(), par1Packet15Place.func_73405_i()))
             {
-                this.sendPacketToPlayer(new Packet103SetSlot(this.playerEntity.craftingInventory.windowId, var13.slotNumber, this.playerEntity.inventory.getCurrentItem()));
+                func_72567_b(new Packet103SetSlot(field_72574_e.craftingInventory.windowId, slot.slotNumber, field_72574_e.inventory.getCurrentItem()));
             }
         }
 
-        var2.actionsAllowed = false;
+        worldserver.field_73060_c = false;
     }
 
-    public void handleErrorMessage(String par1Str, Object[] par2ArrayOfObj)
+    public void handleErrorMessage(String par1Str, Object par2ArrayOfObj[])
     {
-        logger.info(this.playerEntity.username + " lost connection: " + par1Str);
-        this.mcServer.getConfigurationManager().sendPacketToAllPlayers(new Packet3Chat("\u00a7e" + this.playerEntity.username + " left the game."));
-        this.mcServer.getConfigurationManager().func_72367_e(this.playerEntity);
-        this.serverShuttingDown = true;
+        field_72577_a.info((new StringBuilder()).append(field_72574_e.username).append(" lost connection: ").append(par1Str).toString());
+        field_72573_d.func_71203_ab().func_72384_a(new Packet3Chat((new StringBuilder()).append("\247e").append(field_72574_e.username).append(" left the game.").toString()));
+        field_72573_d.func_71203_ab().func_72367_e(field_72574_e);
+        field_72576_c = true;
 
-        if (this.mcServer.isSinglePlayer() && this.playerEntity.username.equals(this.mcServer.getServerOwner()))
+        if (field_72573_d.func_71264_H() && field_72574_e.username.equals(field_72573_d.func_71214_G()))
         {
-            logger.info("Stopping singleplayer server as player logged out");
-            this.mcServer.setServerStopping();
+            field_72577_a.info("Stopping singleplayer server as player logged out");
+            field_72573_d.func_71263_m();
         }
     }
 
     public void registerPacket(Packet par1Packet)
     {
-        logger.warning(this.getClass() + " wasn\'t prepared to deal with a " + par1Packet.getClass());
-        this.kickPlayerFromServer("Protocol error, unexpected packet");
+        field_72577_a.warning((new StringBuilder()).append(getClass()).append(" wasn't prepared to deal with a ").append(par1Packet.getClass()).toString());
+        func_72565_c("Protocol error, unexpected packet");
     }
 
-    /**
-     * addToSendQueue. if it is a chat packet, check before sending it
-     */
-    public void sendPacketToPlayer(Packet par1Packet)
+    public void func_72567_b(Packet par1Packet)
     {
         if (par1Packet instanceof Packet3Chat)
         {
-            Packet3Chat var2 = (Packet3Chat)par1Packet;
-            int var3 = this.playerEntity.getChatVisibility();
+            Packet3Chat packet3chat = (Packet3Chat)par1Packet;
+            int i = field_72574_e.func_71126_v();
 
-            if (var3 == 2)
+            if (i == 2)
             {
                 return;
             }
 
-            if (var3 == 1 && !var2.func_73475_d())
+            if (i == 1 && !packet3chat.func_73475_d())
             {
                 return;
             }
         }
 
-        this.theNetworkManager.addToSendQueue(par1Packet);
+        field_72575_b.addToSendQueue(par1Packet);
     }
 
     public void handleBlockItemSwitch(Packet16BlockItemSwitch par1Packet16BlockItemSwitch)
     {
-        if (par1Packet16BlockItemSwitch.id >= 0 && par1Packet16BlockItemSwitch.id < InventoryPlayer.func_70451_h())
+        if (par1Packet16BlockItemSwitch.id < 0 || par1Packet16BlockItemSwitch.id >= InventoryPlayer.func_70451_h())
         {
-            this.playerEntity.inventory.currentItem = par1Packet16BlockItemSwitch.id;
+            field_72577_a.warning((new StringBuilder()).append(field_72574_e.username).append(" tried to set an invalid carried item").toString());
+            return;
         }
         else
         {
-            logger.warning(this.playerEntity.username + " tried to set an invalid carried item");
+            field_72574_e.inventory.currentItem = par1Packet16BlockItemSwitch.id;
+            return;
         }
     }
 
     public void handleChat(Packet3Chat par1Packet3Chat)
     {
-        if (this.playerEntity.getChatVisibility() == 2)
+        if (field_72574_e.func_71126_v() == 2)
         {
-            this.sendPacketToPlayer(new Packet3Chat("Cannot send chat message."));
+            func_72567_b(new Packet3Chat("Cannot send chat message."));
+            return;
+        }
+
+        String s = par1Packet3Chat.message;
+
+        if (s.length() > 100)
+        {
+            func_72565_c("Chat message too long");
+            return;
+        }
+
+        s = s.trim();
+
+        for (int i = 0; i < s.length(); i++)
+        {
+            if (!ChatAllowedCharacters.isAllowedCharacter(s.charAt(i)))
+            {
+                func_72565_c("Illegal characters in chat");
+                return;
+            }
+        }
+
+        if (s.startsWith("/"))
+        {
+            func_72566_d(s);
         }
         else
         {
-            String var2 = par1Packet3Chat.message;
-
-            if (var2.length() > 100)
+            if (field_72574_e.func_71126_v() == 1)
             {
-                this.kickPlayerFromServer("Chat message too long");
+                func_72567_b(new Packet3Chat("Cannot send chat message."));
+                return;
             }
-            else
-            {
-                var2 = var2.trim();
 
-                for (int var3 = 0; var3 < var2.length(); ++var3)
-                {
-                    if (!ChatAllowedCharacters.isAllowedCharacter(var2.charAt(var3)))
-                    {
-                        this.kickPlayerFromServer("Illegal characters in chat");
-                        return;
-                    }
-                }
+            s = (new StringBuilder()).append("<").append(field_72574_e.username).append("> ").append(s).toString();
+            field_72577_a.info(s);
+            field_72573_d.func_71203_ab().func_72384_a(new Packet3Chat(s, false));
+        }
 
-                if (var2.startsWith("/"))
-                {
-                    this.func_72566_d(var2);
-                }
-                else
-                {
-                    if (this.playerEntity.getChatVisibility() == 1)
-                    {
-                        this.sendPacketToPlayer(new Packet3Chat("Cannot send chat message."));
-                        return;
-                    }
+        field_72581_m += 20;
 
-                    var2 = "<" + this.playerEntity.username + "> " + var2;
-                    logger.info(var2);
-                    this.mcServer.getConfigurationManager().sendPacketToAllPlayers(new Packet3Chat(var2, false));
-                }
-
-                this.chatSpamThresholdCount += 20;
-
-                if (this.chatSpamThresholdCount > 200 && !this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username))
-                {
-                    this.kickPlayerFromServer("disconnect.spam");
-                }
-            }
+        if (field_72581_m > 200 && !field_72573_d.func_71203_ab().func_72353_e(field_72574_e.username))
+        {
+            func_72565_c("disconnect.spam");
         }
     }
 
     private void func_72566_d(String par1Str)
     {
-        if (this.mcServer.getConfigurationManager().areCommandsAllowed(this.playerEntity.username) || "/seed".equals(par1Str))
+        if (field_72573_d.func_71203_ab().func_72353_e(field_72574_e.username) || "/seed".equals(par1Str))
         {
-            logger.info(this.playerEntity.username + " issued server command: " + par1Str);
-            this.mcServer.getCommandManager().executeCommand(this.playerEntity, par1Str);
+            field_72577_a.info((new StringBuilder()).append(field_72574_e.username).append(" issued server command: ").append(par1Str).toString());
+            field_72573_d.func_71187_D().func_71556_a(field_72574_e, par1Str);
         }
     }
 
@@ -674,7 +657,7 @@ public class NetServerHandler extends NetHandler
     {
         if (par1Packet18Animation.animate == 1)
         {
-            this.playerEntity.swingItem();
+            field_72574_e.swingItem();
         }
     }
 
@@ -685,108 +668,102 @@ public class NetServerHandler extends NetHandler
     {
         if (par1Packet19EntityAction.state == 1)
         {
-            this.playerEntity.setSneaking(true);
+            field_72574_e.setSneaking(true);
         }
         else if (par1Packet19EntityAction.state == 2)
         {
-            this.playerEntity.setSneaking(false);
+            field_72574_e.setSneaking(false);
         }
         else if (par1Packet19EntityAction.state == 4)
         {
-            this.playerEntity.setSprinting(true);
+            field_72574_e.setSprinting(true);
         }
         else if (par1Packet19EntityAction.state == 5)
         {
-            this.playerEntity.setSprinting(false);
+            field_72574_e.setSprinting(false);
         }
         else if (par1Packet19EntityAction.state == 3)
         {
-            this.playerEntity.wakeUpPlayer(false, true, true);
-            this.field_72587_r = false;
+            field_72574_e.wakeUpPlayer(false, true, true);
+            field_72587_r = false;
         }
     }
 
     public void handleKickDisconnect(Packet255KickDisconnect par1Packet255KickDisconnect)
     {
-        this.theNetworkManager.networkShutdown("disconnect.quitting", new Object[0]);
+        field_72575_b.networkShutdown("disconnect.quitting", new Object[0]);
     }
 
-    /**
-     * returns 0 for memoryMapped connections
-     */
-    public int packetSize()
+    public int func_72568_e()
     {
-        return this.theNetworkManager.packetSize();
+        return field_72575_b.func_74426_e();
     }
 
     public void handleUseEntity(Packet7UseEntity par1Packet7UseEntity)
     {
-        WorldServer var2 = this.mcServer.worldServerForDimension(this.playerEntity.dimension);
-        Entity var3 = var2.getEntityByID(par1Packet7UseEntity.targetEntity);
+        WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+        Entity entity = worldserver.func_73045_a(par1Packet7UseEntity.targetEntity);
 
-        if (var3 != null)
+        if (entity != null)
         {
-            boolean var4 = this.playerEntity.canEntityBeSeen(var3);
-            double var5 = 36.0D;
+            boolean flag = field_72574_e.canEntityBeSeen(entity);
+            double d = 36D;
 
-            if (!var4)
+            if (!flag)
             {
-                var5 = 9.0D;
+                d = 9D;
             }
 
-            if (this.playerEntity.getDistanceSqToEntity(var3) < var5)
+            if (field_72574_e.getDistanceSqToEntity(entity) < d)
             {
                 if (par1Packet7UseEntity.isLeftClick == 0)
                 {
-                    this.playerEntity.interactWith(var3);
+                    field_72574_e.func_70998_m(entity);
                 }
                 else if (par1Packet7UseEntity.isLeftClick == 1)
                 {
-                    this.playerEntity.attackTargetEntityWithCurrentItem(var3);
+                    field_72574_e.attackTargetEntityWithCurrentItem(entity);
                 }
             }
         }
     }
 
-    public void handleClientCommand(Packet205ClientCommand par1Packet205ClientCommand)
+    public void func_72458_a(Packet205ClientCommand par1Packet205ClientCommand)
     {
-        if (par1Packet205ClientCommand.forceRespawn == 1)
+        if (par1Packet205ClientCommand.field_73447_a == 1)
         {
-            if (this.playerEntity.playerHasConqueredTheEnd)
+            if (field_72574_e.field_71136_j)
             {
-                this.playerEntity = this.mcServer.getConfigurationManager().respawnPlayer(this.playerEntity, 0, true);
+                field_72574_e = field_72573_d.func_71203_ab().func_72368_a(field_72574_e, 0, true);
             }
-            else if (this.playerEntity.getServerForPlayer().getWorldInfo().isHardcoreModeEnabled())
+            else if (field_72574_e.func_71121_q().getWorldInfo().isHardcoreModeEnabled())
             {
-                if (this.mcServer.isSinglePlayer() && this.playerEntity.username.equals(this.mcServer.getServerOwner()))
+                if (field_72573_d.func_71264_H() && field_72574_e.username.equals(field_72573_d.func_71214_G()))
                 {
-                    this.playerEntity.serverForThisPlayer.kickPlayerFromServer("You have died. Game over, man, it\'s game over!");
-                    this.mcServer.deleteWorldAndStopServer();
+                    field_72574_e.netHandler.func_72565_c("You have died. Game over, man, it's game over!");
+                    field_72573_d.func_71272_O();
                 }
                 else
                 {
-                    BanEntry var2 = new BanEntry(this.playerEntity.username);
-                    var2.setBanReason("Death in Hardcore");
-                    this.mcServer.getConfigurationManager().getBannedPlayers().put(var2);
-                    this.playerEntity.serverForThisPlayer.kickPlayerFromServer("You have died. Game over, man, it\'s game over!");
+                    BanEntry banentry = new BanEntry(field_72574_e.username);
+                    banentry.func_73689_b("Death in Hardcore");
+                    field_72573_d.func_71203_ab().func_72390_e().func_73706_a(banentry);
+                    field_72574_e.netHandler.func_72565_c("You have died. Game over, man, it's game over!");
                 }
             }
             else
             {
-                if (this.playerEntity.getHealth() > 0)
+                if (field_72574_e.getHealth() > 0)
                 {
                     return;
                 }
 
-                this.playerEntity = this.mcServer.getConfigurationManager().respawnPlayer(this.playerEntity, 0, false);
+                field_72574_e = field_72573_d.func_71203_ab().func_72368_a(field_72574_e, 0, false);
             }
         }
     }
 
-    /**
-     * packet.processPacket is only called if this returns true
-     */
-    public boolean canProcessPackets()
+    public boolean func_72469_b()
     {
         return true;
     }
@@ -794,50 +771,52 @@ public class NetServerHandler extends NetHandler
     /**
      * respawns the player
      */
-    public void handleRespawn(Packet9Respawn par1Packet9Respawn) {}
+    public void handleRespawn(Packet9Respawn packet9respawn)
+    {
+    }
 
     public void handleCloseWindow(Packet101CloseWindow par1Packet101CloseWindow)
     {
-        this.playerEntity.closeInventory();
+        field_72574_e.func_71128_l();
     }
 
     public void handleWindowClick(Packet102WindowClick par1Packet102WindowClick)
     {
-        if (this.playerEntity.craftingInventory.windowId == par1Packet102WindowClick.window_Id && this.playerEntity.craftingInventory.isPlayerNotUsingContainer(this.playerEntity))
+        if (field_72574_e.craftingInventory.windowId == par1Packet102WindowClick.window_Id && field_72574_e.craftingInventory.func_75129_b(field_72574_e))
         {
-            ItemStack var2 = this.playerEntity.craftingInventory.slotClick(par1Packet102WindowClick.inventorySlot, par1Packet102WindowClick.mouseClick, par1Packet102WindowClick.holdingShift, this.playerEntity);
+            ItemStack itemstack = field_72574_e.craftingInventory.slotClick(par1Packet102WindowClick.inventorySlot, par1Packet102WindowClick.mouseClick, par1Packet102WindowClick.holdingShift, field_72574_e);
 
-            if (ItemStack.areItemStacksEqual(par1Packet102WindowClick.itemStack, var2))
+            if (ItemStack.areItemStacksEqual(par1Packet102WindowClick.itemStack, itemstack))
             {
-                this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet106Transaction(par1Packet102WindowClick.window_Id, par1Packet102WindowClick.action, true));
-                this.playerEntity.playerInventoryBeingManipulated = true;
-                this.playerEntity.craftingInventory.updateCraftingResults();
-                this.playerEntity.sendInventoryToPlayer();
-                this.playerEntity.playerInventoryBeingManipulated = false;
+                field_72574_e.netHandler.func_72567_b(new Packet106Transaction(par1Packet102WindowClick.window_Id, par1Packet102WindowClick.action, true));
+                field_72574_e.field_71137_h = true;
+                field_72574_e.craftingInventory.updateCraftingResults();
+                field_72574_e.func_71113_k();
+                field_72574_e.field_71137_h = false;
             }
             else
             {
-                this.field_72586_s.addKey(this.playerEntity.craftingInventory.windowId, Short.valueOf(par1Packet102WindowClick.action));
-                this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet106Transaction(par1Packet102WindowClick.window_Id, par1Packet102WindowClick.action, false));
-                this.playerEntity.craftingInventory.setPlayerIsPresent(this.playerEntity, false);
-                ArrayList var3 = new ArrayList();
+                field_72586_s.addKey(field_72574_e.craftingInventory.windowId, Short.valueOf(par1Packet102WindowClick.action));
+                field_72574_e.netHandler.func_72567_b(new Packet106Transaction(par1Packet102WindowClick.window_Id, par1Packet102WindowClick.action, false));
+                field_72574_e.craftingInventory.func_75128_a(field_72574_e, false);
+                ArrayList arraylist = new ArrayList();
 
-                for (int var4 = 0; var4 < this.playerEntity.craftingInventory.inventorySlots.size(); ++var4)
+                for (int i = 0; i < field_72574_e.craftingInventory.inventorySlots.size(); i++)
                 {
-                    var3.add(((Slot)this.playerEntity.craftingInventory.inventorySlots.get(var4)).getStack());
+                    arraylist.add(((Slot)field_72574_e.craftingInventory.inventorySlots.get(i)).getStack());
                 }
 
-                this.playerEntity.sendContainerAndContentsToPlayer(this.playerEntity.craftingInventory, var3);
+                field_72574_e.func_71110_a(field_72574_e.craftingInventory, arraylist);
             }
         }
     }
 
     public void handleEnchantItem(Packet108EnchantItem par1Packet108EnchantItem)
     {
-        if (this.playerEntity.craftingInventory.windowId == par1Packet108EnchantItem.windowId && this.playerEntity.craftingInventory.isPlayerNotUsingContainer(this.playerEntity))
+        if (field_72574_e.craftingInventory.windowId == par1Packet108EnchantItem.windowId && field_72574_e.craftingInventory.func_75129_b(field_72574_e))
         {
-            this.playerEntity.craftingInventory.enchantItem(this.playerEntity, par1Packet108EnchantItem.enchantment);
-            this.playerEntity.craftingInventory.updateCraftingResults();
+            field_72574_e.craftingInventory.enchantItem(field_72574_e, par1Packet108EnchantItem.enchantment);
+            field_72574_e.craftingInventory.updateCraftingResults();
         }
     }
 
@@ -846,35 +825,35 @@ public class NetServerHandler extends NetHandler
      */
     public void handleCreativeSetSlot(Packet107CreativeSetSlot par1Packet107CreativeSetSlot)
     {
-        if (this.playerEntity.theItemInWorldManager.isCreative())
+        if (field_72574_e.field_71134_c.func_73083_d())
         {
-            boolean var2 = par1Packet107CreativeSetSlot.slot < 0;
-            ItemStack var3 = par1Packet107CreativeSetSlot.itemStack;
-            boolean var4 = par1Packet107CreativeSetSlot.slot >= 1 && par1Packet107CreativeSetSlot.slot < 36 + InventoryPlayer.func_70451_h();
-            boolean var5 = var3 == null || var3.itemID < Item.itemsList.length && var3.itemID >= 0 && Item.itemsList[var3.itemID] != null;
-            boolean var6 = var3 == null || var3.getItemDamage() >= 0 && var3.getItemDamage() >= 0 && var3.stackSize <= 64 && var3.stackSize > 0;
+            boolean flag = par1Packet107CreativeSetSlot.slot < 0;
+            ItemStack itemstack = par1Packet107CreativeSetSlot.itemStack;
+            boolean flag1 = par1Packet107CreativeSetSlot.slot >= 1 && par1Packet107CreativeSetSlot.slot < 36 + InventoryPlayer.func_70451_h();
+            boolean flag2 = itemstack == null || itemstack.itemID < Item.itemsList.length && itemstack.itemID >= 0 && Item.itemsList[itemstack.itemID] != null;
+            boolean flag3 = itemstack == null || itemstack.getItemDamage() >= 0 && itemstack.getItemDamage() >= 0 && itemstack.stackSize <= 64 && itemstack.stackSize > 0;
 
-            if (var4 && var5 && var6)
+            if (flag1 && flag2 && flag3)
             {
-                if (var3 == null)
+                if (itemstack == null)
                 {
-                    this.playerEntity.inventorySlots.putStackInSlot(par1Packet107CreativeSetSlot.slot, (ItemStack)null);
+                    field_72574_e.inventorySlots.putStackInSlot(par1Packet107CreativeSetSlot.slot, null);
                 }
                 else
                 {
-                    this.playerEntity.inventorySlots.putStackInSlot(par1Packet107CreativeSetSlot.slot, var3);
+                    field_72574_e.inventorySlots.putStackInSlot(par1Packet107CreativeSetSlot.slot, itemstack);
                 }
 
-                this.playerEntity.inventorySlots.setPlayerIsPresent(this.playerEntity, true);
+                field_72574_e.inventorySlots.func_75128_a(field_72574_e, true);
             }
-            else if (var2 && var5 && var6 && this.creativeItemCreationSpamThresholdTally < 200)
+            else if (flag && flag2 && flag3 && field_72578_n < 200)
             {
-                this.creativeItemCreationSpamThresholdTally += 20;
-                EntityItem var7 = this.playerEntity.dropPlayerItem(var3);
+                field_72578_n += 20;
+                EntityItem entityitem = field_72574_e.dropPlayerItem(itemstack);
 
-                if (var7 != null)
+                if (entityitem != null)
                 {
-                    var7.func_70288_d();
+                    entityitem.func_70288_d();
                 }
             }
         }
@@ -882,11 +861,11 @@ public class NetServerHandler extends NetHandler
 
     public void handleTransaction(Packet106Transaction par1Packet106Transaction)
     {
-        Short var2 = (Short)this.field_72586_s.lookup(this.playerEntity.craftingInventory.windowId);
+        Short short1 = (Short)field_72586_s.lookup(field_72574_e.craftingInventory.windowId);
 
-        if (var2 != null && par1Packet106Transaction.shortWindowId == var2.shortValue() && this.playerEntity.craftingInventory.windowId == par1Packet106Transaction.windowId && !this.playerEntity.craftingInventory.isPlayerNotUsingContainer(this.playerEntity))
+        if (short1 != null && par1Packet106Transaction.shortWindowId == short1.shortValue() && field_72574_e.craftingInventory.windowId == par1Packet106Transaction.windowId && !field_72574_e.craftingInventory.func_75129_b(field_72574_e))
         {
-            this.playerEntity.craftingInventory.setPlayerIsPresent(this.playerEntity, true);
+            field_72574_e.craftingInventory.func_75128_a(field_72574_e, true);
         }
     }
 
@@ -895,60 +874,57 @@ public class NetServerHandler extends NetHandler
      */
     public void handleUpdateSign(Packet130UpdateSign par1Packet130UpdateSign)
     {
-        WorldServer var2 = this.mcServer.worldServerForDimension(this.playerEntity.dimension);
+        WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
 
-        if (var2.blockExists(par1Packet130UpdateSign.xPosition, par1Packet130UpdateSign.yPosition, par1Packet130UpdateSign.zPosition))
+        if (worldserver.blockExists(par1Packet130UpdateSign.xPosition, par1Packet130UpdateSign.yPosition, par1Packet130UpdateSign.zPosition))
         {
-            TileEntity var3 = var2.getBlockTileEntity(par1Packet130UpdateSign.xPosition, par1Packet130UpdateSign.yPosition, par1Packet130UpdateSign.zPosition);
+            TileEntity tileentity = worldserver.getBlockTileEntity(par1Packet130UpdateSign.xPosition, par1Packet130UpdateSign.yPosition, par1Packet130UpdateSign.zPosition);
 
-            if (var3 instanceof TileEntitySign)
+            if (tileentity instanceof TileEntitySign)
             {
-                TileEntitySign var4 = (TileEntitySign)var3;
+                TileEntitySign tileentitysign = (TileEntitySign)tileentity;
 
-                if (!var4.isEditable())
+                if (!tileentitysign.isEditable())
                 {
-                    this.mcServer.logWarningMessage("Player " + this.playerEntity.username + " just tried to change non-editable sign");
+                    field_72573_d.func_71236_h((new StringBuilder()).append("Player ").append(field_72574_e.username).append(" just tried to change non-editable sign").toString());
                     return;
                 }
             }
 
-            int var6;
-            int var8;
-
-            for (var8 = 0; var8 < 4; ++var8)
+            for (int i = 0; i < 4; i++)
             {
-                boolean var5 = true;
+                boolean flag = true;
 
-                if (par1Packet130UpdateSign.signLines[var8].length() > 15)
+                if (par1Packet130UpdateSign.signLines[i].length() > 15)
                 {
-                    var5 = false;
+                    flag = false;
                 }
                 else
                 {
-                    for (var6 = 0; var6 < par1Packet130UpdateSign.signLines[var8].length(); ++var6)
+                    for (int l = 0; l < par1Packet130UpdateSign.signLines[i].length(); l++)
                     {
-                        if (ChatAllowedCharacters.allowedCharacters.indexOf(par1Packet130UpdateSign.signLines[var8].charAt(var6)) < 0)
+                        if (ChatAllowedCharacters.allowedCharacters.indexOf(par1Packet130UpdateSign.signLines[i].charAt(l)) < 0)
                         {
-                            var5 = false;
+                            flag = false;
                         }
                     }
                 }
 
-                if (!var5)
+                if (!flag)
                 {
-                    par1Packet130UpdateSign.signLines[var8] = "!?";
+                    par1Packet130UpdateSign.signLines[i] = "!?";
                 }
             }
 
-            if (var3 instanceof TileEntitySign)
+            if (tileentity instanceof TileEntitySign)
             {
-                var8 = par1Packet130UpdateSign.xPosition;
-                int var9 = par1Packet130UpdateSign.yPosition;
-                var6 = par1Packet130UpdateSign.zPosition;
-                TileEntitySign var7 = (TileEntitySign)var3;
-                System.arraycopy(par1Packet130UpdateSign.signLines, 0, var7.signText, 0, 4);
-                var7.onInventoryChanged();
-                var2.markBlockNeedsUpdate(var8, var9, var6);
+                int j = par1Packet130UpdateSign.xPosition;
+                int k = par1Packet130UpdateSign.yPosition;
+                int i1 = par1Packet130UpdateSign.zPosition;
+                TileEntitySign tileentitysign1 = (TileEntitySign)tileentity;
+                System.arraycopy(par1Packet130UpdateSign.signLines, 0, tileentitysign1.signText, 0, 4);
+                tileentitysign1.onInventoryChanged();
+                worldserver.markBlockNeedsUpdate(j, k, i1);
             }
         }
     }
@@ -958,10 +934,10 @@ public class NetServerHandler extends NetHandler
      */
     public void handleKeepAlive(Packet0KeepAlive par1Packet0KeepAlive)
     {
-        if (par1Packet0KeepAlive.randomId == this.keepAliveRandomID)
+        if (par1Packet0KeepAlive.randomId == field_72585_i)
         {
-            int var2 = (int)(System.nanoTime() / 1000000L - this.keepAliveTimeSent);
-            this.playerEntity.field_71138_i = (this.playerEntity.field_71138_i * 3 + var2) / 4;
+            int i = (int)(System.nanoTime() / 0xf4240L - field_72582_j);
+            field_72574_e.field_71138_i = (field_72574_e.field_71138_i * 3 + i) / 4;
         }
     }
 
@@ -978,104 +954,123 @@ public class NetServerHandler extends NetHandler
      */
     public void handlePlayerAbilities(Packet202PlayerAbilities par1Packet202PlayerAbilities)
     {
-        this.playerEntity.capabilities.isFlying = par1Packet202PlayerAbilities.getIsFlying() && this.playerEntity.capabilities.allowFlying;
+        field_72574_e.capabilities.isFlying = par1Packet202PlayerAbilities.func_73350_f() && field_72574_e.capabilities.allowFlying;
     }
 
-    public void handleAutoComplete(Packet203AutoComplete par1Packet203AutoComplete)
+    public void func_72461_a(Packet203AutoComplete par1Packet203AutoComplete)
     {
-        StringBuilder var2 = new StringBuilder();
-        String var4;
+        StringBuilder stringbuilder = new StringBuilder();
+        String s;
 
-        for (Iterator var3 = this.mcServer.getPossibleCompletions(this.playerEntity, par1Packet203AutoComplete.func_73473_d()).iterator(); var3.hasNext(); var2.append(var4))
+        for (Iterator iterator = field_72573_d.func_71248_a(field_72574_e, par1Packet203AutoComplete.func_73473_d()).iterator(); iterator.hasNext(); stringbuilder.append(s))
         {
-            var4 = (String)var3.next();
+            s = (String)iterator.next();
 
-            if (var2.length() > 0)
+            if (stringbuilder.length() > 0)
             {
-                var2.append("\u0000");
+                stringbuilder.append("\0");
             }
         }
 
-        this.playerEntity.serverForThisPlayer.sendPacketToPlayer(new Packet203AutoComplete(var2.toString()));
+        field_72574_e.netHandler.func_72567_b(new Packet203AutoComplete(stringbuilder.toString()));
     }
 
-    public void handleClientInfo(Packet204ClientInfo par1Packet204ClientInfo)
+    public void func_72504_a(Packet204ClientInfo par1Packet204ClientInfo)
     {
-        this.playerEntity.updateClientInfo(par1Packet204ClientInfo);
+        field_72574_e.func_71125_a(par1Packet204ClientInfo);
     }
 
     public void handleCustomPayload(Packet250CustomPayload par1Packet250CustomPayload)
     {
-        DataInputStream var2;
-        ItemStack var3;
-        ItemStack var4;
-
         if ("MC|BEdit".equals(par1Packet250CustomPayload.channel))
         {
             try
             {
-                var2 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
-                var3 = Packet.readItemStack(var2);
+                DataInputStream datainputstream = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
+                ItemStack itemstack = Packet.readItemStack(datainputstream);
 
-                if (!ItemWritableBook.validBookTagPages(var3.getTagCompound()))
+                if (!ItemWritableBook.func_77829_a(itemstack.getTagCompound()))
                 {
                     throw new IOException("Invalid book tag!");
                 }
 
-                var4 = this.playerEntity.inventory.getCurrentItem();
+                ItemStack itemstack2 = field_72574_e.inventory.getCurrentItem();
 
-                if (var3 != null && var3.itemID == Item.writableBook.shiftedIndex && var3.itemID == var4.itemID)
+                if (itemstack != null && itemstack.itemID == Item.field_77821_bF.shiftedIndex && itemstack.itemID == itemstack2.itemID)
                 {
-                    var4.setTagCompound(var3.getTagCompound());
+                    itemstack2.setTagCompound(itemstack.getTagCompound());
                 }
             }
-            catch (Exception var7)
+            catch (Exception exception)
             {
-                var7.printStackTrace();
+                exception.printStackTrace();
             }
         }
         else if ("MC|BSign".equals(par1Packet250CustomPayload.channel))
         {
             try
             {
-                var2 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
-                var3 = Packet.readItemStack(var2);
+                DataInputStream datainputstream1 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
+                ItemStack itemstack1 = Packet.readItemStack(datainputstream1);
 
-                if (!ItemEditableBook.validBookTagContents(var3.getTagCompound()))
+                if (!ItemEditableBook.func_77828_a(itemstack1.getTagCompound()))
                 {
                     throw new IOException("Invalid book tag!");
                 }
 
-                var4 = this.playerEntity.inventory.getCurrentItem();
+                ItemStack itemstack3 = field_72574_e.inventory.getCurrentItem();
 
-                if (var3 != null && var3.itemID == Item.writtenBook.shiftedIndex && var4.itemID == Item.writableBook.shiftedIndex)
+                if (itemstack1 != null && itemstack1.itemID == Item.field_77823_bG.shiftedIndex && itemstack3.itemID == Item.field_77821_bF.shiftedIndex)
                 {
-                    var4.setTagCompound(var3.getTagCompound());
-                    var4.itemID = Item.writtenBook.shiftedIndex;
+                    itemstack3.setTagCompound(itemstack1.getTagCompound());
+                    itemstack3.itemID = Item.field_77823_bG.shiftedIndex;
                 }
             }
-            catch (Exception var6)
+            catch (Exception exception1)
             {
-                var6.printStackTrace();
+                exception1.printStackTrace();
             }
         }
         else if ("MC|TrSel".equals(par1Packet250CustomPayload.channel))
         {
             try
             {
-                var2 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
-                int var8 = var2.readInt();
-                Container var9 = this.playerEntity.craftingInventory;
+                DataInputStream datainputstream2 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
+                int i = datainputstream2.readInt();
+                Container container = field_72574_e.craftingInventory;
 
-                if (var9 instanceof ContainerMerchant)
+                if (container instanceof ContainerMerchant)
                 {
-                    ((ContainerMerchant)var9).setCurrentRecipeIndex(var8);
+                    ((ContainerMerchant)container).func_75175_c(i);
                 }
             }
-            catch (Exception var5)
+            catch (Exception exception2)
             {
-                var5.printStackTrace();
+                exception2.printStackTrace();
             }
         }
+    }
+    
+    public void handleTargetInfos(Packet150TargetInfos packet)
+    {
+    	WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+        EntityLiving entity = (EntityLiving)worldserver.func_73045_a(packet.id);
+    	if(!packet.answer)
+    	{
+    		packet.answer = true;
+    		packet.health = entity.health;
+    		if(entity instanceof EntityPlayer)
+    			packet.mana = ((EntityPlayer)entity).mana;
+    		
+    		field_72575_b.addToSendQueue(packet);
+    	}
+    }
+    
+    public void handleSpell(Packet151Spell packet)
+    {
+    	WorldServer worldserver = field_72573_d.func_71218_a(field_72574_e.dimension);
+    	Spell spell = new Spell(packet.spellID);
+		EntityPlayer player = (EntityPlayer)worldserver.func_73045_a(packet.playerID);
+		spell.cast(player, this);
     }
 }

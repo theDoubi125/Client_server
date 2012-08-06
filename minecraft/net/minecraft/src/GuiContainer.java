@@ -2,6 +2,7 @@ package net.minecraft.src;
 
 import java.util.Iterator;
 import java.util.List;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -12,10 +13,10 @@ public abstract class GuiContainer extends GuiScreen
     protected static RenderItem itemRenderer = new RenderItem();
 
     /** The X size of the inventory window in pixels. */
-    protected int xSize = 176;
+    protected int xSize;
 
     /** The Y size of the inventory window in pixels. */
-    protected int ySize = 166;
+    protected int ySize;
 
     /** A list of the players inventory slots. */
     public Container inventorySlots;
@@ -32,7 +33,9 @@ public abstract class GuiContainer extends GuiScreen
 
     public GuiContainer(Container par1Container)
     {
-        this.inventorySlots = par1Container;
+        xSize = 176;
+        ySize = 166;
+        inventorySlots = par1Container;
     }
 
     /**
@@ -41,9 +44,9 @@ public abstract class GuiContainer extends GuiScreen
     public void initGui()
     {
         super.initGui();
-        this.mc.thePlayer.craftingInventory = this.inventorySlots;
-        this.guiLeft = (this.width - this.xSize) / 2;
-        this.guiTop = (this.height - this.ySize) / 2;
+        mc.thePlayer.craftingInventory = inventorySlots;
+        guiLeft = (width - xSize) / 2;
+        guiTop = (height - ySize) / 2;
     }
 
     /**
@@ -51,10 +54,10 @@ public abstract class GuiContainer extends GuiScreen
      */
     public void drawScreen(int par1, int par2, float par3)
     {
-        this.drawDefaultBackground();
-        int var4 = this.guiLeft;
-        int var5 = this.guiTop;
-        this.drawGuiContainerBackgroundLayer(par3, par1, par2);
+        drawDefaultBackground();
+        int i = guiLeft;
+        int j = guiTop;
+        drawGuiContainerBackgroundLayer(par3, par1, par2);
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         RenderHelper.disableStandardItemLighting();
         GL11.glDisable(GL11.GL_LIGHTING);
@@ -62,51 +65,51 @@ public abstract class GuiContainer extends GuiScreen
         super.drawScreen(par1, par2, par3);
         RenderHelper.enableGUIStandardItemLighting();
         GL11.glPushMatrix();
-        GL11.glTranslatef((float)var4, (float)var5, 0.0F);
+        GL11.glTranslatef(i, j, 0.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        Slot var6 = null;
-        short var7 = 240;
-        short var8 = 240;
-        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)var7 / 1.0F, (float)var8 / 1.0F);
+        Slot slot = null;
+        int k = 240;
+        int i1 = 240;
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)k / 1.0F, (float)i1 / 1.0F);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-        for (int var11 = 0; var11 < this.inventorySlots.inventorySlots.size(); ++var11)
+        for (int l = 0; l < inventorySlots.inventorySlots.size(); l++)
         {
-            Slot var14 = (Slot)this.inventorySlots.inventorySlots.get(var11);
-            this.drawSlotInventory(var14);
+            Slot slot1 = (Slot)inventorySlots.inventorySlots.get(l);
+            drawSlotInventory(slot1);
 
-            if (this.isMouseOverSlot(var14, par1, par2))
+            if (isMouseOverSlot(slot1, par1, par2))
             {
-                var6 = var14;
+                slot = slot1;
                 GL11.glDisable(GL11.GL_LIGHTING);
                 GL11.glDisable(GL11.GL_DEPTH_TEST);
-                int var9 = var14.xDisplayPosition;
-                int var10 = var14.yDisplayPosition;
-                this.drawGradientRect(var9, var10, var9 + 16, var10 + 16, -2130706433, -2130706433);
+                int j1 = slot1.xDisplayPosition;
+                int k1 = slot1.yDisplayPosition;
+                drawGradientRect(j1, k1, j1 + 16, k1 + 16, 0x80ffffff, 0x80ffffff);
                 GL11.glEnable(GL11.GL_LIGHTING);
                 GL11.glEnable(GL11.GL_DEPTH_TEST);
             }
         }
 
-        this.drawGuiContainerForegroundLayer();
-        InventoryPlayer var12 = this.mc.thePlayer.inventory;
+        drawGuiContainerForegroundLayer();
+        InventoryPlayer inventoryplayer = mc.thePlayer.inventory;
 
-        if (var12.getItemStack() != null)
+        if (inventoryplayer.getItemStack() != null)
         {
-            GL11.glTranslatef(0.0F, 0.0F, 32.0F);
-            this.zLevel = 200.0F;
-            itemRenderer.zLevel = 200.0F;
-            itemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, var12.getItemStack(), par1 - var4 - 8, par2 - var5 - 8);
-            itemRenderer.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.renderEngine, var12.getItemStack(), par1 - var4 - 8, par2 - var5 - 8);
-            this.zLevel = 0.0F;
+            GL11.glTranslatef(0.0F, 0.0F, 32F);
+            zLevel = 200F;
+            itemRenderer.zLevel = 200F;
+            itemRenderer.renderItemIntoGUI(fontRenderer, mc.renderEngine, inventoryplayer.getItemStack(), par1 - i - 8, par2 - j - 8);
+            itemRenderer.renderItemOverlayIntoGUI(fontRenderer, mc.renderEngine, inventoryplayer.getItemStack(), par1 - i - 8, par2 - j - 8);
+            zLevel = 0.0F;
             itemRenderer.zLevel = 0.0F;
         }
 
-        if (var12.getItemStack() == null && var6 != null && var6.getHasStack())
+        if (inventoryplayer.getItemStack() == null && slot != null && slot.getHasStack())
         {
-            ItemStack var13 = var6.getStack();
-            this.func_74184_a(var13, par1 - var4, par2 - var5);
+            ItemStack itemstack = slot.getStack();
+            func_74184_a(itemstack, par1 - i, par2 - j);
         }
 
         GL11.glPopMatrix();
@@ -121,72 +124,79 @@ public abstract class GuiContainer extends GuiScreen
         RenderHelper.disableStandardItemLighting();
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        List var4 = par1ItemStack.getItemNameandInformation();
+        List list = par1ItemStack.getItemNameandInformation();
 
-        if (!var4.isEmpty())
+        if (!list.isEmpty())
         {
-            int var5 = 0;
-            Iterator var6 = var4.iterator();
+            int i = 0;
+            Iterator iterator = list.iterator();
 
-            while (var6.hasNext())
+            do
             {
-                String var7 = (String)var6.next();
-                int var8 = this.fontRenderer.getStringWidth(var7);
-
-                if (var8 > var5)
+                if (!iterator.hasNext())
                 {
-                    var5 = var8;
+                    break;
+                }
+
+                String s = (String)iterator.next();
+                int l = fontRenderer.getStringWidth(s);
+
+                if (l > i)
+                {
+                    i = l;
                 }
             }
+            while (true);
 
-            int var15 = par2 + 12;
-            int var16 = par3 - 12;
-            int var9 = 8;
+            int j = par2 + 12;
+            int k = par3 - 12;
+            int i1 = i;
+            int j1 = 8;
 
-            if (var4.size() > 1)
+            if (list.size() > 1)
             {
-                var9 += 2 + (var4.size() - 1) * 10;
+                j1 += 2 + (list.size() - 1) * 10;
             }
 
-            this.zLevel = 300.0F;
-            itemRenderer.zLevel = 300.0F;
-            int var10 = -267386864;
-            this.drawGradientRect(var15 - 3, var16 - 4, var15 + var5 + 3, var16 - 3, var10, var10);
-            this.drawGradientRect(var15 - 3, var16 + var9 + 3, var15 + var5 + 3, var16 + var9 + 4, var10, var10);
-            this.drawGradientRect(var15 - 3, var16 - 3, var15 + var5 + 3, var16 + var9 + 3, var10, var10);
-            this.drawGradientRect(var15 - 4, var16 - 3, var15 - 3, var16 + var9 + 3, var10, var10);
-            this.drawGradientRect(var15 + var5 + 3, var16 - 3, var15 + var5 + 4, var16 + var9 + 3, var10, var10);
-            int var11 = 1347420415;
-            int var12 = (var11 & 16711422) >> 1 | var11 & -16777216;
-            this.drawGradientRect(var15 - 3, var16 - 3 + 1, var15 - 3 + 1, var16 + var9 + 3 - 1, var11, var12);
-            this.drawGradientRect(var15 + var5 + 2, var16 - 3 + 1, var15 + var5 + 3, var16 + var9 + 3 - 1, var11, var12);
-            this.drawGradientRect(var15 - 3, var16 - 3, var15 + var5 + 3, var16 - 3 + 1, var11, var11);
-            this.drawGradientRect(var15 - 3, var16 + var9 + 2, var15 + var5 + 3, var16 + var9 + 3, var12, var12);
+            zLevel = 300F;
+            itemRenderer.zLevel = 300F;
+            int k1 = 0xf0100010;
+            drawGradientRect(j - 3, k - 4, j + i1 + 3, k - 3, k1, k1);
+            drawGradientRect(j - 3, k + j1 + 3, j + i1 + 3, k + j1 + 4, k1, k1);
+            drawGradientRect(j - 3, k - 3, j + i1 + 3, k + j1 + 3, k1, k1);
+            drawGradientRect(j - 4, k - 3, j - 3, k + j1 + 3, k1, k1);
+            drawGradientRect(j + i1 + 3, k - 3, j + i1 + 4, k + j1 + 3, k1, k1);
+            int l1 = 0x505000ff;
+            int i2 = (l1 & 0xfefefe) >> 1 | l1 & 0xff000000;
+            drawGradientRect(j - 3, (k - 3) + 1, (j - 3) + 1, (k + j1 + 3) - 1, l1, i2);
+            drawGradientRect(j + i1 + 2, (k - 3) + 1, j + i1 + 3, (k + j1 + 3) - 1, l1, i2);
+            drawGradientRect(j - 3, k - 3, j + i1 + 3, (k - 3) + 1, l1, l1);
+            drawGradientRect(j - 3, k + j1 + 2, j + i1 + 3, k + j1 + 3, i2, i2);
 
-            for (int var13 = 0; var13 < var4.size(); ++var13)
+            for (int j2 = 0; j2 < list.size(); j2++)
             {
-                String var14 = (String)var4.get(var13);
+                String s1 = (String)list.get(j2);
 
-                if (var13 == 0)
+                if (j2 == 0)
                 {
-                    var14 = "\u00a7" + Integer.toHexString(par1ItemStack.getRarity().rarityColor) + var14;
+                    s1 = (new StringBuilder()).append("\247").append(Integer.toHexString(par1ItemStack.getRarity().rarityColor)).append(s1).toString();
                 }
                 else
                 {
-                    var14 = "\u00a77" + var14;
+                    s1 = (new StringBuilder()).append("\2477").append(s1).toString();
                 }
 
-                this.fontRenderer.drawStringWithShadow(var14, var15, var16, -1);
+                fontRenderer.drawStringWithShadow(s1, j, k, -1);
 
-                if (var13 == 0)
+                if (j2 == 0)
                 {
-                    var16 += 2;
+                    k += 2;
                 }
 
-                var16 += 10;
+                k += 10;
             }
 
-            this.zLevel = 0.0F;
+            zLevel = 0.0F;
             itemRenderer.zLevel = 0.0F;
         }
     }
@@ -197,74 +207,77 @@ public abstract class GuiContainer extends GuiScreen
         RenderHelper.disableStandardItemLighting();
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
-        int var4 = this.fontRenderer.getStringWidth(par1Str);
-        int var5 = par2 + 12;
-        int var6 = par3 - 12;
-        byte var8 = 8;
-        this.zLevel = 300.0F;
-        itemRenderer.zLevel = 300.0F;
-        int var9 = -267386864;
-        this.drawGradientRect(var5 - 3, var6 - 4, var5 + var4 + 3, var6 - 3, var9, var9);
-        this.drawGradientRect(var5 - 3, var6 + var8 + 3, var5 + var4 + 3, var6 + var8 + 4, var9, var9);
-        this.drawGradientRect(var5 - 3, var6 - 3, var5 + var4 + 3, var6 + var8 + 3, var9, var9);
-        this.drawGradientRect(var5 - 4, var6 - 3, var5 - 3, var6 + var8 + 3, var9, var9);
-        this.drawGradientRect(var5 + var4 + 3, var6 - 3, var5 + var4 + 4, var6 + var8 + 3, var9, var9);
-        int var10 = 1347420415;
-        int var11 = (var10 & 16711422) >> 1 | var10 & -16777216;
-        this.drawGradientRect(var5 - 3, var6 - 3 + 1, var5 - 3 + 1, var6 + var8 + 3 - 1, var10, var11);
-        this.drawGradientRect(var5 + var4 + 2, var6 - 3 + 1, var5 + var4 + 3, var6 + var8 + 3 - 1, var10, var11);
-        this.drawGradientRect(var5 - 3, var6 - 3, var5 + var4 + 3, var6 - 3 + 1, var10, var10);
-        this.drawGradientRect(var5 - 3, var6 + var8 + 2, var5 + var4 + 3, var6 + var8 + 3, var11, var11);
-        this.fontRenderer.drawStringWithShadow(par1Str, var5, var6, -1);
-        this.zLevel = 0.0F;
+        int i = fontRenderer.getStringWidth(par1Str);
+        int j = par2 + 12;
+        int k = par3 - 12;
+        int l = i;
+        byte byte0 = 8;
+        zLevel = 300F;
+        itemRenderer.zLevel = 300F;
+        int i1 = 0xf0100010;
+        drawGradientRect(j - 3, k - 4, j + l + 3, k - 3, i1, i1);
+        drawGradientRect(j - 3, k + byte0 + 3, j + l + 3, k + byte0 + 4, i1, i1);
+        drawGradientRect(j - 3, k - 3, j + l + 3, k + byte0 + 3, i1, i1);
+        drawGradientRect(j - 4, k - 3, j - 3, k + byte0 + 3, i1, i1);
+        drawGradientRect(j + l + 3, k - 3, j + l + 4, k + byte0 + 3, i1, i1);
+        int j1 = 0x505000ff;
+        int k1 = (j1 & 0xfefefe) >> 1 | j1 & 0xff000000;
+        drawGradientRect(j - 3, (k - 3) + 1, (j - 3) + 1, (k + byte0 + 3) - 1, j1, k1);
+        drawGradientRect(j + l + 2, (k - 3) + 1, j + l + 3, (k + byte0 + 3) - 1, j1, k1);
+        drawGradientRect(j - 3, k - 3, j + l + 3, (k - 3) + 1, j1, j1);
+        drawGradientRect(j - 3, k + byte0 + 2, j + l + 3, k + byte0 + 3, k1, k1);
+        fontRenderer.drawStringWithShadow(par1Str, j, k, -1);
+        zLevel = 0.0F;
         itemRenderer.zLevel = 0.0F;
     }
 
     /**
-     * Draw the foreground layer for the GuiContainer (everything in front of the items)
+     * Draw the foreground layer for the GuiContainer (everythin in front of the items)
      */
-    protected void drawGuiContainerForegroundLayer() {}
+    protected void drawGuiContainerForegroundLayer()
+    {
+    }
 
     /**
      * Draw the background layer for the GuiContainer (everything behind the items)
      */
-    protected abstract void drawGuiContainerBackgroundLayer(float var1, int var2, int var3);
+    protected abstract void drawGuiContainerBackgroundLayer(float f, int i, int j);
 
     /**
      * Draws an inventory slot
      */
     private void drawSlotInventory(Slot par1Slot)
     {
-        int var2 = par1Slot.xDisplayPosition;
-        int var3 = par1Slot.yDisplayPosition;
-        ItemStack var4 = par1Slot.getStack();
-        boolean var5 = false;
-        this.zLevel = 100.0F;
-        itemRenderer.zLevel = 100.0F;
+        int i = par1Slot.xDisplayPosition;
+        int j = par1Slot.yDisplayPosition;
+        ItemStack itemstack = par1Slot.getStack();
+        boolean flag = false;
+        zLevel = 100F;
+        itemRenderer.zLevel = 100F;
 
-        if (var4 == null)
+        if (itemstack == null)
         {
-            int var6 = par1Slot.getBackgroundIconIndex();
+            int k = par1Slot.getBackgroundIconIndex();
 
-            if (var6 >= 0)
+            if (k >= 0)
             {
                 GL11.glDisable(GL11.GL_LIGHTING);
-                this.mc.renderEngine.bindTexture(this.mc.renderEngine.getTexture("/gui/items.png"));
-                this.drawTexturedModalRect(var2, var3, var6 % 16 * 16, var6 / 16 * 16, 16, 16);
+                mc.renderEngine.bindTexture(mc.renderEngine.getTexture("/gui/items.png"));
+                drawTexturedModalRect(i, j, (k % 16) * 16, (k / 16) * 16, 16, 16);
                 GL11.glEnable(GL11.GL_LIGHTING);
-                var5 = true;
+                flag = true;
             }
         }
 
-        if (!var5)
+        if (!flag)
         {
             GL11.glEnable(GL11.GL_DEPTH_TEST);
-            itemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, var4, var2, var3);
-            itemRenderer.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.renderEngine, var4, var2, var3);
+            itemRenderer.renderItemIntoGUI(fontRenderer, mc.renderEngine, itemstack, i, j);
+            itemRenderer.renderItemOverlayIntoGUI(fontRenderer, mc.renderEngine, itemstack, i, j);
         }
 
         itemRenderer.zLevel = 0.0F;
-        this.zLevel = 0.0F;
+        zLevel = 0.0F;
     }
 
     /**
@@ -272,13 +285,13 @@ public abstract class GuiContainer extends GuiScreen
      */
     private Slot getSlotAtPosition(int par1, int par2)
     {
-        for (int var3 = 0; var3 < this.inventorySlots.inventorySlots.size(); ++var3)
+        for (int i = 0; i < inventorySlots.inventorySlots.size(); i++)
         {
-            Slot var4 = (Slot)this.inventorySlots.inventorySlots.get(var3);
+            Slot slot = (Slot)inventorySlots.inventorySlots.get(i);
 
-            if (this.isMouseOverSlot(var4, par1, par2))
+            if (isMouseOverSlot(slot, par1, par2))
             {
-                return var4;
+                return slot;
             }
         }
 
@@ -294,26 +307,26 @@ public abstract class GuiContainer extends GuiScreen
 
         if (par3 == 0 || par3 == 1)
         {
-            Slot var4 = this.getSlotAtPosition(par1, par2);
-            int var5 = this.guiLeft;
-            int var6 = this.guiTop;
-            boolean var7 = par1 < var5 || par2 < var6 || par1 >= var5 + this.xSize || par2 >= var6 + this.ySize;
-            int var8 = -1;
+            Slot slot = getSlotAtPosition(par1, par2);
+            int i = guiLeft;
+            int j = guiTop;
+            boolean flag = par1 < i || par2 < j || par1 >= i + xSize || par2 >= j + ySize;
+            int k = -1;
 
-            if (var4 != null)
+            if (slot != null)
             {
-                var8 = var4.slotNumber;
+                k = slot.slotNumber;
             }
 
-            if (var7)
+            if (flag)
             {
-                var8 = -999;
+                k = -999;
             }
 
-            if (var8 != -1)
+            if (k != -1)
             {
-                boolean var9 = var8 != -999 && (Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54));
-                this.handleMouseClick(var4, var8, par3, var9);
+                boolean flag1 = k != -999 && (Keyboard.isKeyDown(42) || Keyboard.isKeyDown(54));
+                handleMouseClick(slot, k, par3, flag1);
             }
         }
     }
@@ -323,15 +336,15 @@ public abstract class GuiContainer extends GuiScreen
      */
     private boolean isMouseOverSlot(Slot par1Slot, int par2, int par3)
     {
-        return this.func_74188_c(par1Slot.xDisplayPosition, par1Slot.yDisplayPosition, 16, 16, par2, par3);
+        return func_74188_c(par1Slot.xDisplayPosition, par1Slot.yDisplayPosition, 16, 16, par2, par3);
     }
 
     protected boolean func_74188_c(int par1, int par2, int par3, int par4, int par5, int par6)
     {
-        int var7 = this.guiLeft;
-        int var8 = this.guiTop;
-        par5 -= var7;
-        par6 -= var8;
+        int i = guiLeft;
+        int j = guiTop;
+        par5 -= i;
+        par6 -= j;
         return par5 >= par1 - 1 && par5 < par1 + par3 + 1 && par6 >= par2 - 1 && par6 < par2 + par4 + 1;
     }
 
@@ -342,7 +355,7 @@ public abstract class GuiContainer extends GuiScreen
             par2 = par1Slot.slotNumber;
         }
 
-        this.mc.playerController.windowClick(this.inventorySlots.windowId, par2, par3, par4, this.mc.thePlayer);
+        mc.playerControllerMP.windowClick(inventorySlots.windowId, par2, par3, par4, mc.thePlayer);
     }
 
     /**
@@ -350,9 +363,9 @@ public abstract class GuiContainer extends GuiScreen
      */
     protected void keyTyped(char par1, int par2)
     {
-        if (par2 == 1 || par2 == this.mc.gameSettings.keyBindInventory.keyCode)
+        if (par2 == 1 || par2 == mc.gameSettings.keyBindInventory.keyCode)
         {
-            this.mc.thePlayer.closeScreen();
+            mc.thePlayer.closeScreen();
         }
     }
 
@@ -361,9 +374,14 @@ public abstract class GuiContainer extends GuiScreen
      */
     public void onGuiClosed()
     {
-        if (this.mc.thePlayer != null)
+        if (mc.thePlayer == null)
         {
-            this.inventorySlots.onCraftGuiClosed(this.mc.thePlayer);
+            return;
+        }
+        else
+        {
+            inventorySlots.onCraftGuiClosed(mc.thePlayer);
+            return;
         }
     }
 
@@ -382,9 +400,9 @@ public abstract class GuiContainer extends GuiScreen
     {
         super.updateScreen();
 
-        if (!this.mc.thePlayer.isEntityAlive() || this.mc.thePlayer.isDead)
+        if (!mc.thePlayer.isEntityAlive() || mc.thePlayer.isDead)
         {
-            this.mc.thePlayer.closeScreen();
+            mc.thePlayer.closeScreen();
         }
     }
 }

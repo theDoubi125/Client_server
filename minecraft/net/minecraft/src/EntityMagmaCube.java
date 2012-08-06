@@ -1,13 +1,16 @@
 package net.minecraft.src;
 
+import java.util.List;
+import java.util.Random;
+
 public class EntityMagmaCube extends EntitySlime
 {
     public EntityMagmaCube(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/lava.png";
-        this.isImmuneToFire = true;
-        this.landMovementFactor = 0.2F;
+        texture = "/mob/lava.png";
+        isImmuneToFire = true;
+        landMovementFactor = 0.2F;
     }
 
     /**
@@ -15,7 +18,7 @@ public class EntityMagmaCube extends EntitySlime
      */
     public boolean getCanSpawnHere()
     {
-        return this.worldObj.difficultySetting > 0 && this.worldObj.checkIfAABBIsClear(this.boundingBox) && this.worldObj.getCollidingBoundingBoxes(this, this.boundingBox).isEmpty() && !this.worldObj.isAnyLiquid(this.boundingBox);
+        return worldObj.difficultySetting > 0 && worldObj.checkIfAABBIsClear(boundingBox) && worldObj.getCollidingBoundingBoxes(this, boundingBox).isEmpty() && !worldObj.isAnyLiquid(boundingBox);
     }
 
     /**
@@ -23,12 +26,12 @@ public class EntityMagmaCube extends EntitySlime
      */
     public int getTotalArmorValue()
     {
-        return this.getSlimeSize() * 3;
+        return getSlimeSize() * 3;
     }
 
     public int getBrightnessForRender(float par1)
     {
-        return 15728880;
+        return 0xf000f0;
     }
 
     /**
@@ -49,7 +52,7 @@ public class EntityMagmaCube extends EntitySlime
 
     protected EntitySlime createInstance()
     {
-        return new EntityMagmaCube(this.worldObj);
+        return new EntityMagmaCube(worldObj);
     }
 
     /**
@@ -65,20 +68,20 @@ public class EntityMagmaCube extends EntitySlime
      */
     protected void dropFewItems(boolean par1, int par2)
     {
-        int var3 = this.getDropItemId();
+        int i = getDropItemId();
 
-        if (var3 > 0 && this.getSlimeSize() > 1)
+        if (i > 0 && getSlimeSize() > 1)
         {
-            int var4 = this.rand.nextInt(4) - 2;
+            int j = rand.nextInt(4) - 2;
 
             if (par2 > 0)
             {
-                var4 += this.rand.nextInt(par2 + 1);
+                j += rand.nextInt(par2 + 1);
             }
 
-            for (int var5 = 0; var5 < var4; ++var5)
+            for (int k = 0; k < j; k++)
             {
-                this.dropItem(var3, 1);
+                dropItem(i, 1);
             }
         }
     }
@@ -101,7 +104,7 @@ public class EntityMagmaCube extends EntitySlime
 
     protected void func_70808_l()
     {
-        this.field_70813_a *= 0.9F;
+        field_70813_a *= 0.9F;
     }
 
     /**
@@ -109,14 +112,16 @@ public class EntityMagmaCube extends EntitySlime
      */
     protected void jump()
     {
-        this.motionY = (double)(0.42F + (float)this.getSlimeSize() * 0.1F);
-        this.isAirBorne = true;
+        motionY = 0.42F + (float)getSlimeSize() * 0.1F;
+        isAirBorne = true;
     }
 
     /**
      * Called when the mob is falling. Calculates and applies fall damage.
      */
-    protected void fall(float par1) {}
+    protected void fall(float f)
+    {
+    }
 
     /**
      * Indicates weather the slime is able to damage the player (based upon the slime's size)
@@ -155,7 +160,14 @@ public class EntityMagmaCube extends EntitySlime
      */
     protected String getJumpSound()
     {
-        return this.getSlimeSize() > 1 ? "mob.magmacube.big" : "mob.magmacube.small";
+        if (getSlimeSize() > 1)
+        {
+            return "mob.magmacube.big";
+        }
+        else
+        {
+            return "mob.magmacube.small";
+        }
     }
 
     /**
@@ -172,5 +184,11 @@ public class EntityMagmaCube extends EntitySlime
     protected boolean makesSoundOnLand()
     {
         return true;
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Magma Slime";
     }
 }

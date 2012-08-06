@@ -1,35 +1,44 @@
 package net.minecraft.src;
 
+import java.util.List;
+import net.minecraft.client.Minecraft;
+
 public class GuiIngameMenu extends GuiScreen
 {
     /** Also counts the number of updates, not certain as to why yet. */
-    private int updateCounter2 = 0;
+    private int updateCounter2;
 
     /** Counts the number of screen updates. */
-    private int updateCounter = 0;
+    private int updateCounter;
+
+    public GuiIngameMenu()
+    {
+        updateCounter2 = 0;
+        updateCounter = 0;
+    }
 
     /**
      * Adds the buttons (and other controls) to the screen in question.
      */
     public void initGui()
     {
-        this.updateCounter2 = 0;
-        this.controlList.clear();
-        byte var1 = -16;
-        this.controlList.add(new GuiButton(1, this.width / 2 - 100, this.height / 4 + 120 + var1, StatCollector.translateToLocal("menu.returnToMenu")));
+        updateCounter2 = 0;
+        controlList.clear();
+        byte byte0 = -16;
+        controlList.add(new GuiButton(1, width / 2 - 100, height / 4 + 120 + byte0, StatCollector.translateToLocal("menu.returnToMenu")));
 
-        if (!this.mc.isIntegratedServerRunning())
+        if (!mc.func_71387_A())
         {
-            ((GuiButton)this.controlList.get(0)).displayString = StatCollector.translateToLocal("menu.disconnect");
+            ((GuiButton)controlList.get(0)).displayString = StatCollector.translateToLocal("menu.disconnect");
         }
 
-        this.controlList.add(new GuiButton(4, this.width / 2 - 100, this.height / 4 + 24 + var1, StatCollector.translateToLocal("menu.returnToGame")));
-        this.controlList.add(new GuiButton(0, this.width / 2 - 100, this.height / 4 + 96 + var1, 98, 20, StatCollector.translateToLocal("menu.options")));
-        GuiButton var3;
-        this.controlList.add(var3 = new GuiButton(7, this.width / 2 + 2, this.height / 4 + 96 + var1, 98, 20, StatCollector.translateToLocal("menu.shareToLan")));
-        this.controlList.add(new GuiButton(5, this.width / 2 - 100, this.height / 4 + 48 + var1, 98, 20, StatCollector.translateToLocal("gui.achievements")));
-        this.controlList.add(new GuiButton(6, this.width / 2 + 2, this.height / 4 + 48 + var1, 98, 20, StatCollector.translateToLocal("gui.stats")));
-        var3.enabled = this.mc.isSingleplayer() && !this.mc.getIntegratedServer().func_71344_c();
+        controlList.add(new GuiButton(4, width / 2 - 100, height / 4 + 24 + byte0, StatCollector.translateToLocal("menu.returnToGame")));
+        controlList.add(new GuiButton(0, width / 2 - 100, height / 4 + 96 + byte0, 98, 20, StatCollector.translateToLocal("menu.options")));
+        GuiButton guibutton;
+        controlList.add(guibutton = new GuiButton(7, width / 2 + 2, height / 4 + 96 + byte0, 98, 20, StatCollector.translateToLocal("menu.shareToLan")));
+        controlList.add(new GuiButton(5, width / 2 - 100, height / 4 + 48 + byte0, 98, 20, StatCollector.translateToLocal("gui.achievements")));
+        controlList.add(new GuiButton(6, width / 2 + 2, height / 4 + 48 + byte0, 98, 20, StatCollector.translateToLocal("gui.stats")));
+        guibutton.enabled = mc.func_71356_B() && !mc.func_71401_C().func_71344_c();
     }
 
     /**
@@ -40,36 +49,33 @@ public class GuiIngameMenu extends GuiScreen
         switch (par1GuiButton.id)
         {
             case 0:
-                this.mc.displayGuiScreen(new GuiOptions(this, this.mc.gameSettings));
+                mc.displayGuiScreen(new GuiOptions(this, mc.gameSettings));
                 break;
 
             case 1:
                 par1GuiButton.enabled = false;
-                this.mc.statFileWriter.readStat(StatList.leaveGameStat, 1);
-                this.mc.theWorld.sendQuittingDisconnectingPacket();
-                this.mc.loadWorld((WorldClient)null);
-                this.mc.displayGuiScreen(new GuiMainMenu());
-
-            case 2:
-            case 3:
-            default:
+                mc.statFileWriter.readStat(StatList.leaveGameStat, 1);
+                mc.theWorld.sendQuittingDisconnectingPacket();
+                mc.func_71403_a(null);
+                mc.displayGuiScreen(new GuiMainMenu());
                 break;
 
             case 4:
-                this.mc.displayGuiScreen((GuiScreen)null);
-                this.mc.setIngameFocus();
+                mc.displayGuiScreen(null);
+                mc.setIngameFocus();
                 break;
 
             case 5:
-                this.mc.displayGuiScreen(new GuiAchievements(this.mc.statFileWriter));
+                mc.displayGuiScreen(new GuiAchievements(mc.statFileWriter));
                 break;
 
             case 6:
-                this.mc.displayGuiScreen(new GuiStats(this, this.mc.statFileWriter));
+                mc.displayGuiScreen(new GuiStats(this, mc.statFileWriter));
                 break;
 
             case 7:
-                this.mc.displayGuiScreen(new GuiShareToLan(this));
+                mc.displayGuiScreen(new GuiShareToLan(this));
+                break;
         }
     }
 
@@ -79,7 +85,7 @@ public class GuiIngameMenu extends GuiScreen
     public void updateScreen()
     {
         super.updateScreen();
-        ++this.updateCounter;
+        updateCounter++;
     }
 
     /**
@@ -87,8 +93,8 @@ public class GuiIngameMenu extends GuiScreen
      */
     public void drawScreen(int par1, int par2, float par3)
     {
-        this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRenderer, "Game menu", this.width / 2, 40, 16777215);
+        drawDefaultBackground();
+        drawCenteredString(fontRenderer, "Game menu", width / 2, 40, 0xffffff);
         super.drawScreen(par1, par2, par3);
     }
 }

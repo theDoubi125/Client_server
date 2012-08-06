@@ -1,5 +1,7 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntityEnderPearl extends EntityThrowable
 {
     public EntityEnderPearl(World par1World)
@@ -24,29 +26,29 @@ public class EntityEnderPearl extends EntityThrowable
     {
         if (par1MovingObjectPosition.entityHit != null)
         {
-            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage(this, this.thrower), 0);
+            par1MovingObjectPosition.entityHit.attackEntityFrom(DamageSource.causeThrownDamage(this, thrower), 0);
         }
 
-        for (int var2 = 0; var2 < 32; ++var2)
+        for (int i = 0; i < 32; i++)
         {
-            this.worldObj.spawnParticle("portal", this.posX, this.posY + this.rand.nextDouble() * 2.0D, this.posZ, this.rand.nextGaussian(), 0.0D, this.rand.nextGaussian());
+            worldObj.spawnParticle("portal", posX, posY + rand.nextDouble() * 2D, posZ, rand.nextGaussian(), 0.0D, rand.nextGaussian());
         }
 
-        if (!this.worldObj.isRemote)
+        if (!worldObj.isRemote)
         {
-            if (this.thrower != null && this.thrower instanceof EntityPlayerMP)
+            if (thrower != null && (thrower instanceof EntityPlayerMP))
             {
-                EntityPlayerMP var3 = (EntityPlayerMP)this.thrower;
+                EntityPlayerMP entityplayermp = (EntityPlayerMP)thrower;
 
-                if (!var3.serverForThisPlayer.serverShuttingDown && var3.worldObj == this.worldObj)
+                if (!entityplayermp.netHandler.field_72576_c && entityplayermp.worldObj == worldObj)
                 {
-                    this.thrower.setPositionAndUpdate(this.posX, this.posY, this.posZ);
-                    this.thrower.fallDistance = 0.0F;
-                    this.thrower.attackEntityFrom(DamageSource.fall, 5);
+                    thrower.setPositionAndUpdate(posX, posY, posZ);
+                    thrower.fallDistance = 0.0F;
+                    thrower.attackEntityFrom(DamageSource.fall, 5);
                 }
             }
 
-            this.setDead();
+            setDead();
         }
     }
 }

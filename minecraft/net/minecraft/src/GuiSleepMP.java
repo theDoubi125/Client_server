@@ -1,15 +1,22 @@
 package net.minecraft.src;
 
+import java.util.List;
+import net.minecraft.client.Minecraft;
+
 public class GuiSleepMP extends GuiChat
 {
+    public GuiSleepMP()
+    {
+    }
+
     /**
      * Adds the buttons (and other controls) to the screen in question.
      */
     public void initGui()
     {
         super.initGui();
-        StringTranslate var1 = StringTranslate.getInstance();
-        this.controlList.add(new GuiButton(1, this.width / 2 - 100, this.height - 40, var1.translateKey("multiplayer.stopSleeping")));
+        StringTranslate stringtranslate = StringTranslate.getInstance();
+        controlList.add(new GuiButton(1, width / 2 - 100, height - 40, stringtranslate.translateKey("multiplayer.stopSleeping")));
     }
 
     /**
@@ -19,19 +26,19 @@ public class GuiSleepMP extends GuiChat
     {
         if (par2 == 1)
         {
-            this.wakeEntity();
+            wakeEntity();
         }
         else if (par2 == 28)
         {
-            String var3 = this.inputField.getText().trim();
+            String s = inputField.getText().trim();
 
-            if (var3.length() > 0)
+            if (s.length() > 0)
             {
-                this.mc.thePlayer.sendChatMessage(var3);
+                mc.thePlayer.sendChatMessage(s);
             }
 
-            this.inputField.setText("");
-            this.mc.ingameGUI.func_73827_b().func_73764_c();
+            inputField.setText("");
+            mc.ingameGUI.func_73827_b().func_73764_c();
         }
         else
         {
@@ -46,7 +53,7 @@ public class GuiSleepMP extends GuiChat
     {
         if (par1GuiButton.id == 1)
         {
-            this.wakeEntity();
+            wakeEntity();
         }
         else
         {
@@ -59,7 +66,7 @@ public class GuiSleepMP extends GuiChat
      */
     private void wakeEntity()
     {
-        NetClientHandler var1 = this.mc.thePlayer.sendQueue;
-        var1.addToSendQueue(new Packet19EntityAction(this.mc.thePlayer, 3));
+        NetClientHandler netclienthandler = mc.thePlayer.sendQueue;
+        netclienthandler.addToSendQueue(new Packet19EntityAction(mc.thePlayer, 3));
     }
 }

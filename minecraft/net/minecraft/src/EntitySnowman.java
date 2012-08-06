@@ -1,18 +1,20 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntitySnowman extends EntityGolem
 {
     public EntitySnowman(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/snowman.png";
-        this.setSize(0.4F, 1.8F);
-        this.getNavigator().setAvoidsWater(true);
-        this.tasks.addTask(1, new EntityAIArrowAttack(this, 0.25F, 2, 20));
-        this.tasks.addTask(2, new EntityAIWander(this, 0.2F));
-        this.tasks.addTask(3, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
-        this.tasks.addTask(4, new EntityAILookIdle(this));
-        this.targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, EntityMob.class, 16.0F, 0, true));
+        texture = "/mob/snowman.png";
+        setSize(0.4F, 1.8F);
+        getNavigator().setAvoidsWater(true);
+        tasks.addTask(1, new EntityAIArrowAttack(this, 0.25F, 2, 20));
+        tasks.addTask(2, new EntityAIWander(this, 0.2F));
+        tasks.addTask(3, new EntityAIWatchClosest(this, net.minecraft.src.EntityPlayer.class, 6F));
+        tasks.addTask(4, new EntityAILookIdle(this));
+        targetTasks.addTask(1, new EntityAINearestAttackableTarget(this, net.minecraft.src.EntityMob.class, 16F, 0, true));
     }
 
     /**
@@ -36,28 +38,28 @@ public class EntitySnowman extends EntityGolem
     {
         super.onLivingUpdate();
 
-        if (this.isWet())
+        if (isWet())
         {
-            this.attackEntityFrom(DamageSource.drown, 1);
+            attackEntityFrom(DamageSource.drown, 1);
         }
 
-        int var1 = MathHelper.floor_double(this.posX);
-        int var2 = MathHelper.floor_double(this.posZ);
+        int i = MathHelper.floor_double(posX);
+        int k = MathHelper.floor_double(posZ);
 
-        if (this.worldObj.getBiomeGenForCoords(var1, var2).getFloatTemperature() > 1.0F)
+        if (worldObj.getBiomeGenForCoords(i, k).getFloatTemperature() > 1.0F)
         {
-            this.attackEntityFrom(DamageSource.onFire, 1);
+            attackEntityFrom(DamageSource.onFire, 1);
         }
 
-        for (var1 = 0; var1 < 4; ++var1)
+        for (int j = 0; j < 4; j++)
         {
-            var2 = MathHelper.floor_double(this.posX + (double)((float)(var1 % 2 * 2 - 1) * 0.25F));
-            int var3 = MathHelper.floor_double(this.posY);
-            int var4 = MathHelper.floor_double(this.posZ + (double)((float)(var1 / 2 % 2 * 2 - 1) * 0.25F));
+            int l = MathHelper.floor_double(posX + (double)((float)((j % 2) * 2 - 1) * 0.25F));
+            int i1 = MathHelper.floor_double(posY);
+            int j1 = MathHelper.floor_double(posZ + (double)((float)(((j / 2) % 2) * 2 - 1) * 0.25F));
 
-            if (this.worldObj.getBlockId(var2, var3, var4) == 0 && this.worldObj.getBiomeGenForCoords(var2, var4).getFloatTemperature() < 0.8F && Block.snow.canPlaceBlockAt(this.worldObj, var2, var3, var4))
+            if (worldObj.getBlockId(l, i1, j1) == 0 && worldObj.getBiomeGenForCoords(l, j1).getFloatTemperature() < 0.8F && Block.snow.canPlaceBlockAt(worldObj, l, i1, j1))
             {
-                this.worldObj.setBlockWithNotify(var2, var3, var4, Block.snow.blockID);
+                worldObj.setBlockWithNotify(l, i1, j1, Block.snow.blockID);
             }
         }
     }
@@ -75,11 +77,17 @@ public class EntitySnowman extends EntityGolem
      */
     protected void dropFewItems(boolean par1, int par2)
     {
-        int var3 = this.rand.nextInt(16);
+        int i = rand.nextInt(16);
 
-        for (int var4 = 0; var4 < var3; ++var4)
+        for (int j = 0; j < i; j++)
         {
-            this.dropItem(Item.snowball.shiftedIndex, 1);
+            dropItem(Item.snowball.shiftedIndex, 1);
         }
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Snowman";
     }
 }

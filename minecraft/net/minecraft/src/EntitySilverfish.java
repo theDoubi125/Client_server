@@ -1,5 +1,7 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntitySilverfish extends EntityMob
 {
     /**
@@ -10,10 +12,10 @@ public class EntitySilverfish extends EntityMob
     public EntitySilverfish(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/silverfish.png";
-        this.setSize(0.3F, 0.7F);
-        this.moveSpeed = 0.6F;
-        this.attackStrength = 1;
+        texture = "/mob/silverfish.png";
+        setSize(0.3F, 0.7F);
+        moveSpeed = 0.6F;
+        attackStrength = 1;
     }
 
     public int getMaxHealth()
@@ -36,8 +38,8 @@ public class EntitySilverfish extends EntityMob
      */
     protected Entity findPlayerToAttack()
     {
-        double var1 = 8.0D;
-        return this.worldObj.getClosestVulnerablePlayerToEntity(this, var1);
+        double d = 8D;
+        return worldObj.getClosestVulnerablePlayerToEntity(this, d);
     }
 
     /**
@@ -69,9 +71,9 @@ public class EntitySilverfish extends EntityMob
      */
     public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
     {
-        if (this.allySummonCooldown <= 0 && (par1DamageSource instanceof EntityDamageSource || par1DamageSource == DamageSource.magic))
+        if (allySummonCooldown <= 0 && ((par1DamageSource instanceof EntityDamageSource) || par1DamageSource == DamageSource.magic))
         {
-            this.allySummonCooldown = 20;
+            allySummonCooldown = 20;
         }
 
         return super.attackEntityFrom(par1DamageSource, par2);
@@ -82,10 +84,10 @@ public class EntitySilverfish extends EntityMob
      */
     protected void attackEntity(Entity par1Entity, float par2)
     {
-        if (this.attackTime <= 0 && par2 < 1.2F && par1Entity.boundingBox.maxY > this.boundingBox.minY && par1Entity.boundingBox.minY < this.boundingBox.maxY)
+        if (attackTime <= 0 && par2 < 1.2F && par1Entity.boundingBox.maxY > boundingBox.minY && par1Entity.boundingBox.minY < boundingBox.maxY)
         {
-            this.attackTime = 20;
-            par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), this.attackStrength);
+            attackTime = 20;
+            par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), attackStrength);
         }
     }
 
@@ -94,7 +96,7 @@ public class EntitySilverfish extends EntityMob
      */
     protected void playStepSound(int par1, int par2, int par3, int par4)
     {
-        this.worldObj.playSoundAtEntity(this, "mob.silverfish.step", 1.0F, 1.0F);
+        worldObj.playSoundAtEntity(this, "mob.silverfish.step", 1.0F, 1.0F);
     }
 
     /**
@@ -110,7 +112,7 @@ public class EntitySilverfish extends EntityMob
      */
     public void onUpdate()
     {
-        this.renderYawOffset = this.rotationYaw;
+        renderYawOffset = rotationYaw;
         super.onUpdate();
     }
 
@@ -118,73 +120,74 @@ public class EntitySilverfish extends EntityMob
     {
         super.updateEntityActionState();
 
-        if (!this.worldObj.isRemote)
+        if (worldObj.isRemote)
         {
-            int var1;
-            int var2;
-            int var3;
-            int var5;
+            return;
+        }
 
-            if (this.allySummonCooldown > 0)
+        if (allySummonCooldown > 0)
+        {
+            allySummonCooldown--;
+
+            if (allySummonCooldown == 0)
             {
-                --this.allySummonCooldown;
+                int i = MathHelper.floor_double(posX);
+                int k = MathHelper.floor_double(posY);
+                int i1 = MathHelper.floor_double(posZ);
+                boolean flag = false;
 
-                if (this.allySummonCooldown == 0)
+                for (int l1 = 0; !flag && l1 <= 5 && l1 >= -5; l1 = l1 > 0 ? 0 - l1 : 1 - l1)
                 {
-                    var1 = MathHelper.floor_double(this.posX);
-                    var2 = MathHelper.floor_double(this.posY);
-                    var3 = MathHelper.floor_double(this.posZ);
-                    boolean var4 = false;
-
-                    for (var5 = 0; !var4 && var5 <= 5 && var5 >= -5; var5 = var5 <= 0 ? 1 - var5 : 0 - var5)
+                    for (int j2 = 0; !flag && j2 <= 10 && j2 >= -10; j2 = j2 > 0 ? 0 - j2 : 1 - j2)
                     {
-                        for (int var6 = 0; !var4 && var6 <= 10 && var6 >= -10; var6 = var6 <= 0 ? 1 - var6 : 0 - var6)
+                        for (int k2 = 0; !flag && k2 <= 10 && k2 >= -10; k2 = k2 > 0 ? 0 - k2 : 1 - k2)
                         {
-                            for (int var7 = 0; !var4 && var7 <= 10 && var7 >= -10; var7 = var7 <= 0 ? 1 - var7 : 0 - var7)
+                            int l2 = worldObj.getBlockId(i + j2, k + l1, i1 + k2);
+
+                            if (l2 != Block.silverfish.blockID)
                             {
-                                int var8 = this.worldObj.getBlockId(var1 + var6, var2 + var5, var3 + var7);
-
-                                if (var8 == Block.silverfish.blockID)
-                                {
-                                    this.worldObj.playAuxSFX(2001, var1 + var6, var2 + var5, var3 + var7, Block.silverfish.blockID + (this.worldObj.getBlockMetadata(var1 + var6, var2 + var5, var3 + var7) << 12));
-                                    this.worldObj.setBlockWithNotify(var1 + var6, var2 + var5, var3 + var7, 0);
-                                    Block.silverfish.onBlockDestroyedByPlayer(this.worldObj, var1 + var6, var2 + var5, var3 + var7, 0);
-
-                                    if (this.rand.nextBoolean())
-                                    {
-                                        var4 = true;
-                                        break;
-                                    }
-                                }
+                                continue;
                             }
+
+                            worldObj.playAuxSFX(2001, i + j2, k + l1, i1 + k2, Block.silverfish.blockID + (worldObj.getBlockMetadata(i + j2, k + l1, i1 + k2) << 12));
+                            worldObj.setBlockWithNotify(i + j2, k + l1, i1 + k2, 0);
+                            Block.silverfish.onBlockDestroyedByPlayer(worldObj, i + j2, k + l1, i1 + k2, 0);
+
+                            if (!rand.nextBoolean())
+                            {
+                                continue;
+                            }
+
+                            flag = true;
+                            break;
                         }
                     }
                 }
             }
+        }
 
-            if (this.entityToAttack == null && !this.hasPath())
-            {
-                var1 = MathHelper.floor_double(this.posX);
-                var2 = MathHelper.floor_double(this.posY + 0.5D);
-                var3 = MathHelper.floor_double(this.posZ);
-                int var9 = this.rand.nextInt(6);
-                var5 = this.worldObj.getBlockId(var1 + Facing.offsetsXForSide[var9], var2 + Facing.offsetsYForSide[var9], var3 + Facing.offsetsZForSide[var9]);
+        if (entityToAttack == null && !hasPath())
+        {
+            int j = MathHelper.floor_double(posX);
+            int l = MathHelper.floor_double(posY + 0.5D);
+            int j1 = MathHelper.floor_double(posZ);
+            int k1 = rand.nextInt(6);
+            int i2 = worldObj.getBlockId(j + Facing.offsetsXForSide[k1], l + Facing.offsetsYForSide[k1], j1 + Facing.offsetsZForSide[k1]);
 
-                if (BlockSilverfish.getPosingIdByMetadata(var5))
-                {
-                    this.worldObj.setBlockAndMetadataWithNotify(var1 + Facing.offsetsXForSide[var9], var2 + Facing.offsetsYForSide[var9], var3 + Facing.offsetsZForSide[var9], Block.silverfish.blockID, BlockSilverfish.getMetadataForBlockType(var5));
-                    this.spawnExplosionParticle();
-                    this.setDead();
-                }
-                else
-                {
-                    this.updateWanderPath();
-                }
-            }
-            else if (this.entityToAttack != null && !this.hasPath())
+            if (BlockSilverfish.getPosingIdByMetadata(i2))
             {
-                this.entityToAttack = null;
+                worldObj.setBlockAndMetadataWithNotify(j + Facing.offsetsXForSide[k1], l + Facing.offsetsYForSide[k1], j1 + Facing.offsetsZForSide[k1], Block.silverfish.blockID, BlockSilverfish.getMetadataForBlockType(i2));
+                spawnExplosionParticle();
+                setDead();
             }
+            else
+            {
+                updateWanderPath();
+            }
+        }
+        else if (entityToAttack != null && !hasPath())
+        {
+            entityToAttack = null;
         }
     }
 
@@ -194,7 +197,14 @@ public class EntitySilverfish extends EntityMob
      */
     public float getBlockPathWeight(int par1, int par2, int par3)
     {
-        return this.worldObj.getBlockId(par1, par2 - 1, par3) == Block.stone.blockID ? 10.0F : super.getBlockPathWeight(par1, par2, par3);
+        if (worldObj.getBlockId(par1, par2 - 1, par3) == Block.stone.blockID)
+        {
+            return 10F;
+        }
+        else
+        {
+            return super.getBlockPathWeight(par1, par2, par3);
+        }
     }
 
     /**
@@ -212,8 +222,8 @@ public class EntitySilverfish extends EntityMob
     {
         if (super.getCanSpawnHere())
         {
-            EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 5.0D);
-            return var1 == null;
+            EntityPlayer entityplayer = worldObj.getClosestPlayerToEntity(this, 5D);
+            return entityplayer == null;
         }
         else
         {
@@ -227,5 +237,11 @@ public class EntitySilverfish extends EntityMob
     public EnumCreatureAttribute getCreatureAttribute()
     {
         return EnumCreatureAttribute.ARTHROPOD;
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Silver Fish";
     }
 }

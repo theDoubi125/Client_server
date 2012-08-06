@@ -2,20 +2,23 @@ package net.minecraft.src;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.util.List;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 
 public class GuiMerchant extends GuiContainer
 {
     private IMerchant field_74203_o;
-    private GuiButtonMerchant nextRecipeButtonIndex;
-    private GuiButtonMerchant previousRecipeButtonIndex;
-    private int currentRecipeIndex = 0;
+    private GuiButtonMerchant field_74202_p;
+    private GuiButtonMerchant field_74201_q;
+    private int field_74200_r;
 
     public GuiMerchant(InventoryPlayer par1InventoryPlayer, IMerchant par2IMerchant, World par3World)
     {
         super(new ContainerMerchant(par1InventoryPlayer, par2IMerchant, par3World));
-        this.field_74203_o = par2IMerchant;
+        field_74200_r = 0;
+        field_74203_o = par2IMerchant;
     }
 
     /**
@@ -24,21 +27,21 @@ public class GuiMerchant extends GuiContainer
     public void initGui()
     {
         super.initGui();
-        int var1 = (this.width - this.xSize) / 2;
-        int var2 = (this.height - this.ySize) / 2;
-        this.controlList.add(this.nextRecipeButtonIndex = new GuiButtonMerchant(1, var1 + 120 + 27, var2 + 24 - 1, true));
-        this.controlList.add(this.previousRecipeButtonIndex = new GuiButtonMerchant(2, var1 + 36 - 19, var2 + 24 - 1, false));
-        this.nextRecipeButtonIndex.enabled = false;
-        this.previousRecipeButtonIndex.enabled = false;
+        int i = (width - xSize) / 2;
+        int j = (height - ySize) / 2;
+        controlList.add(field_74202_p = new GuiButtonMerchant(1, i + 120 + 27, (j + 24) - 1, true));
+        controlList.add(field_74201_q = new GuiButtonMerchant(2, (i + 36) - 19, (j + 24) - 1, false));
+        field_74202_p.enabled = false;
+        field_74201_q.enabled = false;
     }
 
     /**
-     * Draw the foreground layer for the GuiContainer (everything in front of the items)
+     * Draw the foreground layer for the GuiContainer (everythin in front of the items)
      */
     protected void drawGuiContainerForegroundLayer()
     {
-        this.fontRenderer.drawString(StatCollector.translateToLocal("entity.Villager.name"), 56, 6, 4210752);
-        this.fontRenderer.drawString(StatCollector.translateToLocal("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
+        fontRenderer.drawString(StatCollector.translateToLocal("entity.Villager.name"), 56, 6, 0x404040);
+        fontRenderer.drawString(StatCollector.translateToLocal("container.inventory"), 8, (ySize - 96) + 2, 0x404040);
     }
 
     /**
@@ -47,12 +50,12 @@ public class GuiMerchant extends GuiContainer
     public void updateScreen()
     {
         super.updateScreen();
-        MerchantRecipeList var1 = this.field_74203_o.getRecipes(this.mc.thePlayer);
+        MerchantRecipeList merchantrecipelist = field_74203_o.func_70934_b(mc.thePlayer);
 
-        if (var1 != null)
+        if (merchantrecipelist != null)
         {
-            this.nextRecipeButtonIndex.enabled = this.currentRecipeIndex < var1.size() - 1;
-            this.previousRecipeButtonIndex.enabled = this.currentRecipeIndex > 0;
+            field_74202_p.enabled = field_74200_r < merchantrecipelist.size() - 1;
+            field_74201_q.enabled = field_74200_r > 0;
         }
     }
 
@@ -61,33 +64,33 @@ public class GuiMerchant extends GuiContainer
      */
     protected void actionPerformed(GuiButton par1GuiButton)
     {
-        boolean var2 = false;
+        boolean flag = false;
 
-        if (par1GuiButton == this.nextRecipeButtonIndex)
+        if (par1GuiButton == field_74202_p)
         {
-            ++this.currentRecipeIndex;
-            var2 = true;
+            field_74200_r++;
+            flag = true;
         }
-        else if (par1GuiButton == this.previousRecipeButtonIndex)
+        else if (par1GuiButton == field_74201_q)
         {
-            --this.currentRecipeIndex;
-            var2 = true;
+            field_74200_r--;
+            flag = true;
         }
 
-        if (var2)
+        if (flag)
         {
-            ((ContainerMerchant)this.inventorySlots).setCurrentRecipeIndex(this.currentRecipeIndex);
-            ByteArrayOutputStream var3 = new ByteArrayOutputStream();
-            DataOutputStream var4 = new DataOutputStream(var3);
+            ((ContainerMerchant)inventorySlots).func_75175_c(field_74200_r);
+            ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
+            DataOutputStream dataoutputstream = new DataOutputStream(bytearrayoutputstream);
 
             try
             {
-                var4.writeInt(this.currentRecipeIndex);
-                this.mc.getSendQueue().addToSendQueue(new Packet250CustomPayload("MC|TrSel", var3.toByteArray()));
+                dataoutputstream.writeInt(field_74200_r);
+                mc.getSendQueue().addToSendQueue(new Packet250CustomPayload("MC|TrSel", bytearrayoutputstream.toByteArray()));
             }
-            catch (Exception var6)
+            catch (Exception exception)
             {
-                var6.printStackTrace();
+                exception.printStackTrace();
             }
         }
     }
@@ -97,12 +100,12 @@ public class GuiMerchant extends GuiContainer
      */
     protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3)
     {
-        int var4 = this.mc.renderEngine.getTexture("/gui/trading.png");
+        int i = mc.renderEngine.getTexture("/gui/trading.png");
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.renderEngine.bindTexture(var4);
-        int var5 = (this.width - this.xSize) / 2;
-        int var6 = (this.height - this.ySize) / 2;
-        this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
+        mc.renderEngine.bindTexture(i);
+        int j = (width - xSize) / 2;
+        int k = (height - ySize) / 2;
+        drawTexturedModalRect(j, k, 0, 0, xSize, ySize);
     }
 
     /**
@@ -111,49 +114,49 @@ public class GuiMerchant extends GuiContainer
     public void drawScreen(int par1, int par2, float par3)
     {
         super.drawScreen(par1, par2, par3);
-        MerchantRecipeList var4 = this.field_74203_o.getRecipes(this.mc.thePlayer);
+        MerchantRecipeList merchantrecipelist = field_74203_o.func_70934_b(mc.thePlayer);
 
-        if (var4 != null && !var4.isEmpty())
+        if (merchantrecipelist != null && !merchantrecipelist.isEmpty())
         {
-            int var5 = (this.width - this.xSize) / 2;
-            int var6 = (this.height - this.ySize) / 2;
+            int i = (width - xSize) / 2;
+            int j = (height - ySize) / 2;
             GL11.glPushMatrix();
-            int var7 = this.currentRecipeIndex;
-            MerchantRecipe var8 = (MerchantRecipe)var4.get(var7);
-            ItemStack var9 = var8.getItemToBuy();
-            ItemStack var10 = var8.getSecondItemToBuy();
-            ItemStack var11 = var8.getItemToSell();
+            int k = field_74200_r;
+            MerchantRecipe merchantrecipe = (MerchantRecipe)merchantrecipelist.get(k);
+            ItemStack itemstack = merchantrecipe.func_77394_a();
+            ItemStack itemstack1 = merchantrecipe.func_77396_b();
+            ItemStack itemstack2 = merchantrecipe.func_77397_d();
             RenderHelper.enableGUIStandardItemLighting();
             GL11.glDisable(GL11.GL_LIGHTING);
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glEnable(GL11.GL_COLOR_MATERIAL);
             GL11.glEnable(GL11.GL_LIGHTING);
-            itemRenderer.zLevel = 100.0F;
-            itemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, var9, var5 + 36, var6 + 24);
-            itemRenderer.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.renderEngine, var9, var5 + 36, var6 + 24);
+            itemRenderer.zLevel = 100F;
+            itemRenderer.renderItemIntoGUI(fontRenderer, mc.renderEngine, itemstack, i + 36, j + 24);
+            itemRenderer.renderItemOverlayIntoGUI(fontRenderer, mc.renderEngine, itemstack, i + 36, j + 24);
 
-            if (var10 != null)
+            if (itemstack1 != null)
             {
-                itemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, var10, var5 + 62, var6 + 24);
-                itemRenderer.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.renderEngine, var10, var5 + 62, var6 + 24);
+                itemRenderer.renderItemIntoGUI(fontRenderer, mc.renderEngine, itemstack1, i + 62, j + 24);
+                itemRenderer.renderItemOverlayIntoGUI(fontRenderer, mc.renderEngine, itemstack1, i + 62, j + 24);
             }
 
-            itemRenderer.renderItemIntoGUI(this.fontRenderer, this.mc.renderEngine, var11, var5 + 120, var6 + 24);
-            itemRenderer.renderItemOverlayIntoGUI(this.fontRenderer, this.mc.renderEngine, var11, var5 + 120, var6 + 24);
+            itemRenderer.renderItemIntoGUI(fontRenderer, mc.renderEngine, itemstack2, i + 120, j + 24);
+            itemRenderer.renderItemOverlayIntoGUI(fontRenderer, mc.renderEngine, itemstack2, i + 120, j + 24);
             itemRenderer.zLevel = 0.0F;
             GL11.glDisable(GL11.GL_LIGHTING);
 
-            if (this.func_74188_c(36, 24, 16, 16, par1, par2))
+            if (func_74188_c(36, 24, 16, 16, par1, par2))
             {
-                this.func_74184_a(var9, par1, par2);
+                func_74184_a(itemstack, par1, par2);
             }
-            else if (var10 != null && this.func_74188_c(62, 24, 16, 16, par1, par2))
+            else if (itemstack1 != null && func_74188_c(62, 24, 16, 16, par1, par2))
             {
-                this.func_74184_a(var10, par1, par2);
+                func_74184_a(itemstack1, par1, par2);
             }
-            else if (this.func_74188_c(120, 24, 16, 16, par1, par2))
+            else if (func_74188_c(120, 24, 16, 16, par1, par2))
             {
-                this.func_74184_a(var11, par1, par2);
+                func_74184_a(itemstack2, par1, par2);
             }
 
             GL11.glPopMatrix();
@@ -165,6 +168,6 @@ public class GuiMerchant extends GuiContainer
 
     public IMerchant func_74199_h()
     {
-        return this.field_74203_o;
+        return field_74203_o;
     }
 }

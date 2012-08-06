@@ -10,77 +10,79 @@ public abstract class EntityFlying extends EntityLiving
     /**
      * Called when the mob is falling. Calculates and applies fall damage.
      */
-    protected void fall(float par1) {}
+    protected void fall(float f)
+    {
+    }
 
     /**
      * Moves the entity based on the specified heading.  Args: strafe, forward
      */
     public void moveEntityWithHeading(float par1, float par2)
     {
-        if (this.isInWater())
+        if (isInWater())
         {
-            this.moveFlying(par1, par2, 0.02F);
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= 0.800000011920929D;
-            this.motionY *= 0.800000011920929D;
-            this.motionZ *= 0.800000011920929D;
+            moveFlying(par1, par2, 0.02F);
+            moveEntity(motionX, motionY, motionZ);
+            motionX *= 0.80000001192092896D;
+            motionY *= 0.80000001192092896D;
+            motionZ *= 0.80000001192092896D;
         }
-        else if (this.handleLavaMovement())
+        else if (handleLavaMovement())
         {
-            this.moveFlying(par1, par2, 0.02F);
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= 0.5D;
-            this.motionY *= 0.5D;
-            this.motionZ *= 0.5D;
+            moveFlying(par1, par2, 0.02F);
+            moveEntity(motionX, motionY, motionZ);
+            motionX *= 0.5D;
+            motionY *= 0.5D;
+            motionZ *= 0.5D;
         }
         else
         {
-            float var3 = 0.91F;
+            float f = 0.91F;
 
-            if (this.onGround)
+            if (onGround)
             {
-                var3 = 0.54600006F;
-                int var4 = this.worldObj.getBlockId(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.boundingBox.minY) - 1, MathHelper.floor_double(this.posZ));
+                f = 0.5460001F;
+                int i = worldObj.getBlockId(MathHelper.floor_double(posX), MathHelper.floor_double(boundingBox.minY) - 1, MathHelper.floor_double(posZ));
 
-                if (var4 > 0)
+                if (i > 0)
                 {
-                    var3 = Block.blocksList[var4].slipperiness * 0.91F;
+                    f = Block.blocksList[i].slipperiness * 0.91F;
                 }
             }
 
-            float var8 = 0.16277136F / (var3 * var3 * var3);
-            this.moveFlying(par1, par2, this.onGround ? 0.1F * var8 : 0.02F);
-            var3 = 0.91F;
+            float f1 = 0.1627714F / (f * f * f);
+            moveFlying(par1, par2, onGround ? 0.1F * f1 : 0.02F);
+            f = 0.91F;
 
-            if (this.onGround)
+            if (onGround)
             {
-                var3 = 0.54600006F;
-                int var5 = this.worldObj.getBlockId(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.boundingBox.minY) - 1, MathHelper.floor_double(this.posZ));
+                f = 0.5460001F;
+                int j = worldObj.getBlockId(MathHelper.floor_double(posX), MathHelper.floor_double(boundingBox.minY) - 1, MathHelper.floor_double(posZ));
 
-                if (var5 > 0)
+                if (j > 0)
                 {
-                    var3 = Block.blocksList[var5].slipperiness * 0.91F;
+                    f = Block.blocksList[j].slipperiness * 0.91F;
                 }
             }
 
-            this.moveEntity(this.motionX, this.motionY, this.motionZ);
-            this.motionX *= (double)var3;
-            this.motionY *= (double)var3;
-            this.motionZ *= (double)var3;
+            moveEntity(motionX, motionY, motionZ);
+            motionX *= f;
+            motionY *= f;
+            motionZ *= f;
         }
 
-        this.field_70722_aY = this.field_70721_aZ;
-        double var10 = this.posX - this.prevPosX;
-        double var9 = this.posZ - this.prevPosZ;
-        float var7 = MathHelper.sqrt_double(var10 * var10 + var9 * var9) * 4.0F;
+        field_70722_aY = field_70721_aZ;
+        double d = posX - prevPosX;
+        double d1 = posZ - prevPosZ;
+        float f2 = MathHelper.sqrt_double(d * d + d1 * d1) * 4F;
 
-        if (var7 > 1.0F)
+        if (f2 > 1.0F)
         {
-            var7 = 1.0F;
+            f2 = 1.0F;
         }
 
-        this.field_70721_aZ += (var7 - this.field_70721_aZ) * 0.4F;
-        this.field_70754_ba += this.field_70721_aZ;
+        field_70721_aZ += (f2 - field_70721_aZ) * 0.4F;
+        field_70754_ba += field_70721_aZ;
     }
 
     /**
@@ -89,5 +91,10 @@ public abstract class EntityFlying extends EntityLiving
     public boolean isOnLadder()
     {
         return false;
+    }
+    
+    public String getBreed()
+    {
+    	return "Flying Mob";
     }
 }

@@ -1,31 +1,33 @@
 package net.minecraft.src;
 
 import java.util.Iterator;
+import java.util.List;
 import net.minecraft.server.MinecraftServer;
 
 public class WorldManager implements IWorldAccess
 {
-    /** Reference to the MinecraftServer object. */
-    private MinecraftServer mcServer;
+    private MinecraftServer field_72783_a;
     private WorldServer field_72782_b;
 
     public WorldManager(MinecraftServer par1MinecraftServer, WorldServer par2WorldServer)
     {
-        this.mcServer = par1MinecraftServer;
-        this.field_72782_b = par2WorldServer;
+        field_72783_a = par1MinecraftServer;
+        field_72782_b = par2WorldServer;
     }
 
     /**
      * Spawns a particle. Arg: particleType, x, y, z, velX, velY, velZ
      */
-    public void spawnParticle(String par1Str, double par2, double par4, double par6, double par8, double par10, double par12) {}
+    public void spawnParticle(String s, double d, double d1, double d2, double d3, double d4, double d5)
+    {
+    }
 
     /**
      * Start the skin for this entity downloading, if necessary, and increment its reference counter
      */
     public void obtainEntitySkin(Entity par1Entity)
     {
-        this.field_72782_b.getEntityTracker().addEntityToTracker(par1Entity);
+        field_72782_b.func_73039_n().func_72786_a(par1Entity);
     }
 
     /**
@@ -33,7 +35,7 @@ public class WorldManager implements IWorldAccess
      */
     public void releaseEntitySkin(Entity par1Entity)
     {
-        this.field_72782_b.getEntityTracker().removeEntityFromAllTrackingPlayers(par1Entity);
+        field_72782_b.func_73039_n().func_72790_b(par1Entity);
     }
 
     /**
@@ -41,14 +43,16 @@ public class WorldManager implements IWorldAccess
      */
     public void playSound(String par1Str, double par2, double par4, double par6, float par8, float par9)
     {
-        this.mcServer.getConfigurationManager().sendToAllNear(par2, par4, par6, par8 > 1.0F ? (double)(16.0F * par8) : 16.0D, this.field_72782_b.provider.worldType, new Packet62LevelSound(par1Str, par2, par4, par6, par8, par9));
+        field_72783_a.func_71203_ab().func_72393_a(par2, par4, par6, par8 <= 1.0F ? 16D : 16F * par8, field_72782_b.worldProvider.worldType, new Packet62LevelSound(par1Str, par2, par4, par6, par8, par9));
     }
 
     /**
      * Called across all registered IWorldAccess instances when a block range is invalidated. Args: minX, minY, minZ,
      * maxX, maxY, maxZ
      */
-    public void markBlockRangeNeedsUpdate(int par1, int par2, int par3, int par4, int par5, int par6) {}
+    public void markBlockRangeNeedsUpdate(int i, int j, int k, int l, int i1, int j1)
+    {
+    }
 
     /**
      * Will mark the block and neighbors that their renderers need an update (could be all the same renderer
@@ -56,50 +60,56 @@ public class WorldManager implements IWorldAccess
      */
     public void markBlockNeedsUpdate(int par1, int par2, int par3)
     {
-        this.field_72782_b.getPlayerManager().flagChunkForUpdate(par1, par2, par3);
+        field_72782_b.func_73040_p().func_72687_a(par1, par2, par3);
     }
 
     /**
      * As of mc 1.2.3 this method has exactly the same signature and does exactly the same as markBlockNeedsUpdate
      */
-    public void markBlockNeedsUpdate2(int par1, int par2, int par3) {}
+    public void markBlockNeedsUpdate2(int i, int j, int k)
+    {
+    }
 
     /**
      * Plays the specified record. Arg: recordName, x, y, z
      */
-    public void playRecord(String par1Str, int par2, int par3, int par4) {}
+    public void playRecord(String s, int i, int j, int k)
+    {
+    }
 
     /**
      * Plays a pre-canned sound effect along with potentially auxiliary data-driven one-shot behaviour (particles, etc).
      */
     public void playAuxSFX(EntityPlayer par1EntityPlayer, int par2, int par3, int par4, int par5, int par6)
     {
-        this.mcServer.getConfigurationManager().sendToAllNearExcept(par1EntityPlayer, (double)par3, (double)par4, (double)par5, 64.0D, this.field_72782_b.provider.worldType, new Packet61DoorChange(par2, par3, par4, par5, par6));
+        field_72783_a.func_71203_ab().func_72397_a(par1EntityPlayer, par3, par4, par5, 64D, field_72782_b.worldProvider.worldType, new Packet61DoorChange(par2, par3, par4, par5, par6));
     }
 
-    /**
-     * Starts (or continues) destroying a block with given ID at the given coordinates for the given partially destroyed
-     * value
-     */
-    public void destroyBlockPartially(int par1, int par2, int par3, int par4, int par5)
+    public void func_72705_a(int par1, int par2, int par3, int par4, int par5)
     {
-        Iterator var6 = this.mcServer.getConfigurationManager().playerList.iterator();
+        Iterator iterator = field_72783_a.func_71203_ab().field_72404_b.iterator();
 
-        while (var6.hasNext())
+        do
         {
-            EntityPlayerMP var7 = (EntityPlayerMP)var6.next();
-
-            if (var7 != null && var7.worldObj == this.field_72782_b && var7.entityId != par1)
+            if (!iterator.hasNext())
             {
-                double var8 = (double)par2 - var7.posX;
-                double var10 = (double)par3 - var7.posY;
-                double var12 = (double)par4 - var7.posZ;
+                break;
+            }
 
-                if (var8 * var8 + var10 * var10 + var12 * var12 < 1024.0D)
+            EntityPlayerMP entityplayermp = (EntityPlayerMP)iterator.next();
+
+            if (entityplayermp != null && entityplayermp.worldObj == field_72782_b && entityplayermp.entityId != par1)
+            {
+                double d = (double)par2 - entityplayermp.posX;
+                double d1 = (double)par3 - entityplayermp.posY;
+                double d2 = (double)par4 - entityplayermp.posZ;
+
+                if (d * d + d1 * d1 + d2 * d2 < 1024D)
                 {
-                    var7.serverForThisPlayer.sendPacketToPlayer(new Packet55BlockDestroy(par1, par2, par3, par4, par5));
+                    entityplayermp.netHandler.func_72567_b(new Packet55BlockDestroy(par1, par2, par3, par4, par5));
                 }
             }
         }
+        while (true);
     }
 }

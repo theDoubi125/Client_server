@@ -1,6 +1,7 @@
 package net.minecraft.src;
 
 import java.util.Random;
+import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.util.glu.GLU;
@@ -9,7 +10,7 @@ public class GuiEnchantment extends GuiContainer
 {
     /** The book model used on the GUI. */
     private static ModelBook bookModel = new ModelBook();
-    private Random field_74216_x = new Random();
+    private Random field_74216_x;
 
     /** ContainerEnchantment object associated with this gui */
     private ContainerEnchantment containerEnchantment;
@@ -25,16 +26,17 @@ public class GuiEnchantment extends GuiContainer
     public GuiEnchantment(InventoryPlayer par1InventoryPlayer, World par2World, int par3, int par4, int par5)
     {
         super(new ContainerEnchantment(par1InventoryPlayer, par2World, par3, par4, par5));
-        this.containerEnchantment = (ContainerEnchantment)this.inventorySlots;
+        field_74216_x = new Random();
+        containerEnchantment = (ContainerEnchantment)inventorySlots;
     }
 
     /**
-     * Draw the foreground layer for the GuiContainer (everything in front of the items)
+     * Draw the foreground layer for the GuiContainer (everythin in front of the items)
      */
     protected void drawGuiContainerForegroundLayer()
     {
-        this.fontRenderer.drawString(StatCollector.translateToLocal("container.enchant"), 12, 6, 4210752);
-        this.fontRenderer.drawString(StatCollector.translateToLocal("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
+        fontRenderer.drawString(StatCollector.translateToLocal("container.enchant"), 12, 6, 0x404040);
+        fontRenderer.drawString(StatCollector.translateToLocal("container.inventory"), 8, (ySize - 96) + 2, 0x404040);
     }
 
     /**
@@ -43,7 +45,7 @@ public class GuiEnchantment extends GuiContainer
     public void updateScreen()
     {
         super.updateScreen();
-        this.func_74205_h();
+        func_74205_h();
     }
 
     /**
@@ -52,17 +54,17 @@ public class GuiEnchantment extends GuiContainer
     protected void mouseClicked(int par1, int par2, int par3)
     {
         super.mouseClicked(par1, par2, par3);
-        int var4 = (this.width - this.xSize) / 2;
-        int var5 = (this.height - this.ySize) / 2;
+        int i = (width - xSize) / 2;
+        int j = (height - ySize) / 2;
 
-        for (int var6 = 0; var6 < 3; ++var6)
+        for (int k = 0; k < 3; k++)
         {
-            int var7 = par1 - (var4 + 60);
-            int var8 = par2 - (var5 + 14 + 19 * var6);
+            int l = par1 - (i + 60);
+            int i1 = par2 - (j + 14 + 19 * k);
 
-            if (var7 >= 0 && var8 >= 0 && var7 < 108 && var8 < 19 && this.containerEnchantment.enchantItem(this.mc.thePlayer, var6))
+            if (l >= 0 && i1 >= 0 && l < 108 && i1 < 19 && containerEnchantment.enchantItem(mc.thePlayer, k))
             {
-                this.mc.playerController.sendEnchantPacket(this.containerEnchantment.windowId, var6);
+                mc.playerControllerMP.sendEnchantPacket(containerEnchantment.windowId, k);
             }
         }
     }
@@ -72,185 +74,183 @@ public class GuiEnchantment extends GuiContainer
      */
     protected void drawGuiContainerBackgroundLayer(float par1, int par2, int par3)
     {
-        int var4 = this.mc.renderEngine.getTexture("/gui/enchant.png");
+        int i = mc.renderEngine.getTexture("/gui/enchant.png");
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.renderEngine.bindTexture(var4);
-        int var5 = (this.width - this.xSize) / 2;
-        int var6 = (this.height - this.ySize) / 2;
-        this.drawTexturedModalRect(var5, var6, 0, 0, this.xSize, this.ySize);
+        mc.renderEngine.bindTexture(i);
+        int j = (width - xSize) / 2;
+        int k = (height - ySize) / 2;
+        drawTexturedModalRect(j, k, 0, 0, xSize, ySize);
         GL11.glPushMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPushMatrix();
         GL11.glLoadIdentity();
-        ScaledResolution var7 = new ScaledResolution(this.mc.gameSettings, this.mc.displayWidth, this.mc.displayHeight);
-        GL11.glViewport((var7.getScaledWidth() - 320) / 2 * var7.getScaleFactor(), (var7.getScaledHeight() - 240) / 2 * var7.getScaleFactor(), 320 * var7.getScaleFactor(), 240 * var7.getScaleFactor());
+        ScaledResolution scaledresolution = new ScaledResolution(mc.gameSettings, mc.displayWidth, mc.displayHeight);
+        GL11.glViewport(((scaledresolution.getScaledWidth() - 320) / 2) * scaledresolution.func_78325_e(), ((scaledresolution.getScaledHeight() - 240) / 2) * scaledresolution.func_78325_e(), 320 * scaledresolution.func_78325_e(), 240 * scaledresolution.func_78325_e());
         GL11.glTranslatef(-0.34F, 0.23F, 0.0F);
-        GLU.gluPerspective(90.0F, 1.3333334F, 9.0F, 80.0F);
-        float var8 = 1.0F;
+        GLU.gluPerspective(90F, 1.333333F, 9F, 80F);
+        float f = 1.0F;
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
         RenderHelper.enableStandardItemLighting();
-        GL11.glTranslatef(0.0F, 3.3F, -16.0F);
-        GL11.glScalef(var8, var8, var8);
-        float var9 = 5.0F;
-        GL11.glScalef(var9, var9, var9);
-        GL11.glRotatef(180.0F, 0.0F, 0.0F, 1.0F);
-        this.mc.renderEngine.bindTexture(this.mc.renderEngine.getTexture("/item/book.png"));
-        GL11.glRotatef(20.0F, 1.0F, 0.0F, 0.0F);
-        float var10 = this.field_74208_u + (this.field_74209_t - this.field_74208_u) * par1;
-        GL11.glTranslatef((1.0F - var10) * 0.2F, (1.0F - var10) * 0.1F, (1.0F - var10) * 0.25F);
-        GL11.glRotatef(-(1.0F - var10) * 90.0F - 90.0F, 0.0F, 1.0F, 0.0F);
-        GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-        float var11 = this.field_74212_q + (this.field_74213_p - this.field_74212_q) * par1 + 0.25F;
-        float var12 = this.field_74212_q + (this.field_74213_p - this.field_74212_q) * par1 + 0.75F;
-        var11 = (var11 - (float)MathHelper.truncateDoubleToInt((double)var11)) * 1.6F - 0.3F;
-        var12 = (var12 - (float)MathHelper.truncateDoubleToInt((double)var12)) * 1.6F - 0.3F;
+        GL11.glTranslatef(0.0F, 3.3F, -16F);
+        GL11.glScalef(f, f, f);
+        float f1 = 5F;
+        GL11.glScalef(f1, f1, f1);
+        GL11.glRotatef(180F, 0.0F, 0.0F, 1.0F);
+        mc.renderEngine.bindTexture(mc.renderEngine.getTexture("/item/book.png"));
+        GL11.glRotatef(20F, 1.0F, 0.0F, 0.0F);
+        float f2 = field_74208_u + (field_74209_t - field_74208_u) * par1;
+        GL11.glTranslatef((1.0F - f2) * 0.2F, (1.0F - f2) * 0.1F, (1.0F - f2) * 0.25F);
+        GL11.glRotatef(-(1.0F - f2) * 90F - 90F, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(180F, 1.0F, 0.0F, 0.0F);
+        float f3 = field_74212_q + (field_74213_p - field_74212_q) * par1 + 0.25F;
+        float f4 = field_74212_q + (field_74213_p - field_74212_q) * par1 + 0.75F;
+        f3 = (f3 - (float)MathHelper.truncateDoubleToInt(f3)) * 1.6F - 0.3F;
+        f4 = (f4 - (float)MathHelper.truncateDoubleToInt(f4)) * 1.6F - 0.3F;
 
-        if (var11 < 0.0F)
+        if (f3 < 0.0F)
         {
-            var11 = 0.0F;
+            f3 = 0.0F;
         }
 
-        if (var12 < 0.0F)
+        if (f4 < 0.0F)
         {
-            var12 = 0.0F;
+            f4 = 0.0F;
         }
 
-        if (var11 > 1.0F)
+        if (f3 > 1.0F)
         {
-            var11 = 1.0F;
+            f3 = 1.0F;
         }
 
-        if (var12 > 1.0F)
+        if (f4 > 1.0F)
         {
-            var12 = 1.0F;
+            f4 = 1.0F;
         }
 
         GL11.glEnable(GL12.GL_RESCALE_NORMAL);
-        bookModel.render((Entity)null, 0.0F, var11, var12, var10, 0.0F, 0.0625F);
+        bookModel.render(null, 0.0F, f3, f4, f2, 0.0F, 0.0625F);
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         RenderHelper.disableStandardItemLighting();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glViewport(0, 0, this.mc.displayWidth, this.mc.displayHeight);
+        GL11.glViewport(0, 0, mc.displayWidth, mc.displayHeight);
         GL11.glPopMatrix();
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glPopMatrix();
         RenderHelper.disableStandardItemLighting();
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        this.mc.renderEngine.bindTexture(var4);
-        EnchantmentNameParts.instance.setRandSeed(this.containerEnchantment.nameSeed);
+        mc.renderEngine.bindTexture(i);
+        EnchantmentNameParts.instance.setRandSeed(containerEnchantment.nameSeed);
 
-        for (int var13 = 0; var13 < 3; ++var13)
+        for (int l = 0; l < 3; l++)
         {
-            String var14 = EnchantmentNameParts.instance.generateRandomEnchantName();
-            this.zLevel = 0.0F;
-            this.mc.renderEngine.bindTexture(var4);
-            int var15 = this.containerEnchantment.enchantLevels[var13];
+            String s = EnchantmentNameParts.instance.generateRandomEnchantName();
+            zLevel = 0.0F;
+            mc.renderEngine.bindTexture(i);
+            int i1 = containerEnchantment.enchantLevels[l];
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-            if (var15 == 0)
+            if (i1 == 0)
             {
-                this.drawTexturedModalRect(var5 + 60, var6 + 14 + 19 * var13, 0, 185, 108, 19);
+                drawTexturedModalRect(j + 60, k + 14 + 19 * l, 0, 185, 108, 19);
+                continue;
+            }
+
+            String s1 = (new StringBuilder()).append("").append(i1).toString();
+            FontRenderer fontrenderer = mc.standardGalacticFontRenderer;
+            int j1 = 0x685e4a;
+
+            if (mc.thePlayer.experienceLevel < i1 && !mc.thePlayer.capabilities.isCreativeMode)
+            {
+                drawTexturedModalRect(j + 60, k + 14 + 19 * l, 0, 185, 108, 19);
+                fontrenderer.drawSplitString(s, j + 62, k + 16 + 19 * l, 104, (j1 & 0xfefefe) >> 1);
+                fontrenderer = mc.fontRenderer;
+                j1 = 0x407f10;
+                fontrenderer.drawStringWithShadow(s1, (j + 62 + 104) - fontrenderer.getStringWidth(s1), k + 16 + 19 * l + 7, j1);
+                continue;
+            }
+
+            int k1 = par2 - (j + 60);
+            int l1 = par3 - (k + 14 + 19 * l);
+
+            if (k1 >= 0 && l1 >= 0 && k1 < 108 && l1 < 19)
+            {
+                drawTexturedModalRect(j + 60, k + 14 + 19 * l, 0, 204, 108, 19);
+                j1 = 0xffff80;
             }
             else
             {
-                String var16 = "" + var15;
-                FontRenderer var17 = this.mc.standardGalacticFontRenderer;
-                int var18 = 6839882;
-
-                if (this.mc.thePlayer.experienceLevel < var15 && !this.mc.thePlayer.capabilities.isCreativeMode)
-                {
-                    this.drawTexturedModalRect(var5 + 60, var6 + 14 + 19 * var13, 0, 185, 108, 19);
-                    var17.drawSplitString(var14, var5 + 62, var6 + 16 + 19 * var13, 104, (var18 & 16711422) >> 1);
-                    var17 = this.mc.fontRenderer;
-                    var18 = 4226832;
-                    var17.drawStringWithShadow(var16, var5 + 62 + 104 - var17.getStringWidth(var16), var6 + 16 + 19 * var13 + 7, var18);
-                }
-                else
-                {
-                    int var19 = par2 - (var5 + 60);
-                    int var20 = par3 - (var6 + 14 + 19 * var13);
-
-                    if (var19 >= 0 && var20 >= 0 && var19 < 108 && var20 < 19)
-                    {
-                        this.drawTexturedModalRect(var5 + 60, var6 + 14 + 19 * var13, 0, 204, 108, 19);
-                        var18 = 16777088;
-                    }
-                    else
-                    {
-                        this.drawTexturedModalRect(var5 + 60, var6 + 14 + 19 * var13, 0, 166, 108, 19);
-                    }
-
-                    var17.drawSplitString(var14, var5 + 62, var6 + 16 + 19 * var13, 104, var18);
-                    var17 = this.mc.fontRenderer;
-                    var18 = 8453920;
-                    var17.drawStringWithShadow(var16, var5 + 62 + 104 - var17.getStringWidth(var16), var6 + 16 + 19 * var13 + 7, var18);
-                }
+                drawTexturedModalRect(j + 60, k + 14 + 19 * l, 0, 166, 108, 19);
             }
+
+            fontrenderer.drawSplitString(s, j + 62, k + 16 + 19 * l, 104, j1);
+            fontrenderer = mc.fontRenderer;
+            j1 = 0x80ff20;
+            fontrenderer.drawStringWithShadow(s1, (j + 62 + 104) - fontrenderer.getStringWidth(s1), k + 16 + 19 * l + 7, j1);
         }
     }
 
     public void func_74205_h()
     {
-        ItemStack var1 = this.inventorySlots.getSlot(0).getStack();
+        ItemStack itemstack = inventorySlots.getSlot(0).getStack();
 
-        if (!ItemStack.areItemStacksEqual(var1, this.field_74207_v))
+        if (!ItemStack.areItemStacksEqual(itemstack, field_74207_v))
         {
-            this.field_74207_v = var1;
+            field_74207_v = itemstack;
 
             do
             {
-                this.field_74211_r += (float)(this.field_74216_x.nextInt(4) - this.field_74216_x.nextInt(4));
+                field_74211_r += field_74216_x.nextInt(4) - field_74216_x.nextInt(4);
             }
-            while (this.field_74213_p <= this.field_74211_r + 1.0F && this.field_74213_p >= this.field_74211_r - 1.0F);
+            while (field_74213_p <= field_74211_r + 1.0F && field_74213_p >= field_74211_r - 1.0F);
         }
 
-        ++this.field_74214_o;
-        this.field_74212_q = this.field_74213_p;
-        this.field_74208_u = this.field_74209_t;
-        boolean var2 = false;
+        field_74214_o++;
+        field_74212_q = field_74213_p;
+        field_74208_u = field_74209_t;
+        boolean flag = false;
 
-        for (int var3 = 0; var3 < 3; ++var3)
+        for (int i = 0; i < 3; i++)
         {
-            if (this.containerEnchantment.enchantLevels[var3] != 0)
+            if (containerEnchantment.enchantLevels[i] != 0)
             {
-                var2 = true;
+                flag = true;
             }
         }
 
-        if (var2)
+        if (flag)
         {
-            this.field_74209_t += 0.2F;
+            field_74209_t += 0.2F;
         }
         else
         {
-            this.field_74209_t -= 0.2F;
+            field_74209_t -= 0.2F;
         }
 
-        if (this.field_74209_t < 0.0F)
+        if (field_74209_t < 0.0F)
         {
-            this.field_74209_t = 0.0F;
+            field_74209_t = 0.0F;
         }
 
-        if (this.field_74209_t > 1.0F)
+        if (field_74209_t > 1.0F)
         {
-            this.field_74209_t = 1.0F;
+            field_74209_t = 1.0F;
         }
 
-        float var5 = (this.field_74211_r - this.field_74213_p) * 0.4F;
-        float var4 = 0.2F;
+        float f = (field_74211_r - field_74213_p) * 0.4F;
+        float f1 = 0.2F;
 
-        if (var5 < -var4)
+        if (f < -f1)
         {
-            var5 = -var4;
+            f = -f1;
         }
 
-        if (var5 > var4)
+        if (f > f1)
         {
-            var5 = var4;
+            f = f1;
         }
 
-        this.field_74210_s += (var5 - this.field_74210_s) * 0.9F;
-        this.field_74213_p += this.field_74210_s;
+        field_74210_s += (f - field_74210_s) * 0.9F;
+        field_74213_p += field_74210_s;
     }
 }

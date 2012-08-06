@@ -5,74 +5,90 @@ import net.minecraft.server.MinecraftServer;
 
 public class CommandServerTp extends CommandBase
 {
-    public String getCommandName()
+    public CommandServerTp()
+    {
+    }
+
+    public String func_71517_b()
     {
         return "tp";
     }
 
-    public String getCommandUsage(ICommandSender par1ICommandSender)
+    public String func_71518_a(ICommandSender par1ICommandSender)
     {
-        return par1ICommandSender.translateString("commands.tp.usage", new Object[0]);
+        return par1ICommandSender.func_70004_a("commands.tp.usage", new Object[0]);
     }
 
-    public void processCommand(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public void func_71515_b(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
-        if (par2ArrayOfStr.length < 1)
+        if (par2ArrayOfStr.length >= 1)
         {
-            throw new WrongUsageException("commands.tp.usage", new Object[0]);
-        }
-        else
-        {
-            MinecraftServer var3 = MinecraftServer.getServer();
-            EntityPlayerMP var4;
+            MinecraftServer minecraftserver = MinecraftServer.func_71276_C();
+            EntityPlayerMP entityplayermp;
 
-            if (par2ArrayOfStr.length != 2 && par2ArrayOfStr.length != 4)
+            if (par2ArrayOfStr.length == 2 || par2ArrayOfStr.length == 4)
             {
-                var4 = (EntityPlayerMP)getCommandSenderAsPlayer(par1ICommandSender);
-            }
-            else
-            {
-                var4 = var3.getConfigurationManager().getPlayerForUsername(par2ArrayOfStr[0]);
+                entityplayermp = minecraftserver.func_71203_ab().func_72361_f(par2ArrayOfStr[0]);
 
-                if (var4 == null)
+                if (entityplayermp == null)
                 {
                     throw new PlayerNotFoundException();
                 }
             }
-
-            if (par2ArrayOfStr.length != 3 && par2ArrayOfStr.length != 4)
+            else
             {
-                if (par2ArrayOfStr.length == 1 || par2ArrayOfStr.length == 2)
+                entityplayermp = (EntityPlayerMP)func_71521_c(par1ICommandSender);
+            }
+
+            if (par2ArrayOfStr.length == 3 || par2ArrayOfStr.length == 4)
+            {
+                if (entityplayermp.worldObj != null)
                 {
-                    EntityPlayerMP var10 = var3.getConfigurationManager().getPlayerForUsername(par2ArrayOfStr[par2ArrayOfStr.length - 1]);
-
-                    if (var10 == null)
-                    {
-                        throw new PlayerNotFoundException();
-                    }
-
-                    var4.serverForThisPlayer.setPlayerLocation(var10.posX, var10.posY, var10.posZ, var10.rotationYaw, var10.rotationPitch);
-                    notifyAdmins(par1ICommandSender, "commands.tp.success", new Object[] {var4.getEntityName(), var10.getEntityName()});
+                    int i = par2ArrayOfStr.length - 3;
+                    int j = 0x1c9c380;
+                    int k = func_71532_a(par1ICommandSender, par2ArrayOfStr[i++], -j, j);
+                    int l = func_71532_a(par1ICommandSender, par2ArrayOfStr[i++], 0, 256);
+                    int i1 = func_71532_a(par1ICommandSender, par2ArrayOfStr[i++], -j, j);
+                    entityplayermp.setPositionAndUpdate((float)k + 0.5F, l, (float)i1 + 0.5F);
+                    func_71522_a(par1ICommandSender, "commands.tp.coordinates", new Object[]
+                            {
+                                entityplayermp.func_70023_ak(), Integer.valueOf(k), Integer.valueOf(l), Integer.valueOf(i1)
+                            });
                 }
             }
-            else if (var4.worldObj != null)
+            else if (par2ArrayOfStr.length == 1 || par2ArrayOfStr.length == 2)
             {
-                int var5 = par2ArrayOfStr.length - 3;
-                int var6 = 30000000;
-                int var7 = parseIntBounded(par1ICommandSender, par2ArrayOfStr[var5++], -var6, var6);
-                int var8 = parseIntBounded(par1ICommandSender, par2ArrayOfStr[var5++], 0, 256);
-                int var9 = parseIntBounded(par1ICommandSender, par2ArrayOfStr[var5++], -var6, var6);
-                var4.setPositionAndUpdate((double)((float)var7 + 0.5F), (double)var8, (double)((float)var9 + 0.5F));
-                notifyAdmins(par1ICommandSender, "commands.tp.coordinates", new Object[] {var4.getEntityName(), Integer.valueOf(var7), Integer.valueOf(var8), Integer.valueOf(var9)});
+                EntityPlayerMP entityplayermp1 = minecraftserver.func_71203_ab().func_72361_f(par2ArrayOfStr[par2ArrayOfStr.length - 1]);
+
+                if (entityplayermp1 == null)
+                {
+                    throw new PlayerNotFoundException();
+                }
+
+                entityplayermp.netHandler.func_72569_a(entityplayermp1.posX, entityplayermp1.posY, entityplayermp1.posZ, entityplayermp1.rotationYaw, entityplayermp1.rotationPitch);
+                func_71522_a(par1ICommandSender, "commands.tp.success", new Object[]
+                        {
+                            entityplayermp.func_70023_ak(), entityplayermp1.func_70023_ak()
+                        });
             }
+
+            return;
+        }
+        else
+        {
+            throw new WrongUsageException("commands.tp.usage", new Object[0]);
         }
     }
 
-    /**
-     * Adds the strings available in this command to the given list of tab completion options.
-     */
-    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public List func_71516_a(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
-        return par2ArrayOfStr.length != 1 && par2ArrayOfStr.length != 2 ? null : getListOfStringsMatchingLastWord(par2ArrayOfStr, MinecraftServer.getServer().getAllUsernames());
+        if (par2ArrayOfStr.length == 1 || par2ArrayOfStr.length == 2)
+        {
+            return func_71530_a(par2ArrayOfStr, MinecraftServer.func_71276_C().func_71213_z());
+        }
+        else
+        {
+            return null;
+        }
     }
 }

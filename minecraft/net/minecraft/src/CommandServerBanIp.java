@@ -10,51 +10,54 @@ public class CommandServerBanIp extends CommandBase
 {
     public static final Pattern field_71545_a = Pattern.compile("^([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
 
-    public String getCommandName()
+    public CommandServerBanIp()
+    {
+    }
+
+    public String func_71517_b()
     {
         return "ban-ip";
     }
 
-    /**
-     * Returns true if the given command sender is allowed to use this command.
-     */
-    public boolean canCommandSenderUseCommand(ICommandSender par1ICommandSender)
+    public boolean func_71519_b(ICommandSender par1ICommandSender)
     {
-        return MinecraftServer.getServer().getConfigurationManager().getBannedIPs().isListActive() && super.canCommandSenderUseCommand(par1ICommandSender);
+        return MinecraftServer.func_71276_C().func_71203_ab().func_72363_f().func_73710_b() && super.func_71519_b(par1ICommandSender);
     }
 
-    public String getCommandUsage(ICommandSender par1ICommandSender)
+    public String func_71518_a(ICommandSender par1ICommandSender)
     {
-        return par1ICommandSender.translateString("commands.banip.usage", new Object[0]);
+        return par1ICommandSender.func_70004_a("commands.banip.usage", new Object[0]);
     }
 
-    public void processCommand(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public void func_71515_b(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
         if (par2ArrayOfStr.length >= 1 && par2ArrayOfStr[0].length() > 1)
         {
-            Matcher var3 = field_71545_a.matcher(par2ArrayOfStr[0]);
-            String var4 = null;
+            Matcher matcher = field_71545_a.matcher(par2ArrayOfStr[0]);
+            String s = null;
 
             if (par2ArrayOfStr.length >= 2)
             {
-                var4 = joinString(par2ArrayOfStr, 1);
+                s = func_71520_a(par2ArrayOfStr, 1);
             }
 
-            if (var3.matches())
+            if (matcher.matches())
             {
-                this.func_71544_a(par1ICommandSender, par2ArrayOfStr[0], var4);
+                func_71544_a(par1ICommandSender, par2ArrayOfStr[0], s);
             }
             else
             {
-                EntityPlayerMP var5 = MinecraftServer.getServer().getConfigurationManager().getPlayerForUsername(par2ArrayOfStr[0]);
+                EntityPlayerMP entityplayermp = MinecraftServer.func_71276_C().func_71203_ab().func_72361_f(par2ArrayOfStr[0]);
 
-                if (var5 == null)
+                if (entityplayermp == null)
                 {
                     throw new PlayerNotFoundException("commands.banip.invalid", new Object[0]);
                 }
 
-                this.func_71544_a(par1ICommandSender, var5.func_71114_r(), var4);
+                func_71544_a(par1ICommandSender, entityplayermp.func_71114_r(), s);
             }
+
+            return;
         }
         else
         {
@@ -62,43 +65,53 @@ public class CommandServerBanIp extends CommandBase
         }
     }
 
-    /**
-     * Adds the strings available in this command to the given list of tab completion options.
-     */
-    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public List func_71516_a(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
-        return par2ArrayOfStr.length == 1 ? getListOfStringsMatchingLastWord(par2ArrayOfStr, MinecraftServer.getServer().getAllUsernames()) : null;
+        if (par2ArrayOfStr.length == 1)
+        {
+            return func_71530_a(par2ArrayOfStr, MinecraftServer.func_71276_C().func_71213_z());
+        }
+        else
+        {
+            return null;
+        }
     }
 
     protected void func_71544_a(ICommandSender par1ICommandSender, String par2Str, String par3Str)
     {
-        BanEntry var4 = new BanEntry(par2Str);
-        var4.setBannedBy(par1ICommandSender.getCommandSenderName());
+        BanEntry banentry = new BanEntry(par2Str);
+        banentry.func_73687_a(par1ICommandSender.func_70005_c_());
 
         if (par3Str != null)
         {
-            var4.setBanReason(par3Str);
+            banentry.func_73689_b(par3Str);
         }
 
-        MinecraftServer.getServer().getConfigurationManager().getBannedIPs().put(var4);
-        List var5 = MinecraftServer.getServer().getConfigurationManager().getPlayerList(par2Str);
-        String[] var6 = new String[var5.size()];
-        int var7 = 0;
-        EntityPlayerMP var9;
+        MinecraftServer.func_71276_C().func_71203_ab().func_72363_f().func_73706_a(banentry);
+        List list = MinecraftServer.func_71276_C().func_71203_ab().func_72382_j(par2Str);
+        String as[] = new String[list.size()];
+        int i = 0;
 
-        for (Iterator var8 = var5.iterator(); var8.hasNext(); var6[var7++] = var9.getEntityName())
+        for (Iterator iterator = list.iterator(); iterator.hasNext();)
         {
-            var9 = (EntityPlayerMP)var8.next();
-            var9.serverForThisPlayer.kickPlayerFromServer("You have been IP banned.");
+            EntityPlayerMP entityplayermp = (EntityPlayerMP)iterator.next();
+            entityplayermp.netHandler.func_72565_c("You have been IP banned.");
+            as[i++] = entityplayermp.func_70023_ak();
         }
 
-        if (var5.isEmpty())
+        if (list.isEmpty())
         {
-            notifyAdmins(par1ICommandSender, "commands.banip.success", new Object[] {par2Str});
+            func_71522_a(par1ICommandSender, "commands.banip.success", new Object[]
+                    {
+                        par2Str
+                    });
         }
         else
         {
-            notifyAdmins(par1ICommandSender, "commands.banip.success.players", new Object[] {par2Str, joinNiceString(var6)});
+            func_71522_a(par1ICommandSender, "commands.banip.success.players", new Object[]
+                    {
+                        par2Str, func_71527_a(as)
+                    });
         }
     }
 }

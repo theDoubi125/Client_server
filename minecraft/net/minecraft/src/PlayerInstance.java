@@ -1,199 +1,191 @@
 package net.minecraft.src;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 class PlayerInstance
 {
-    private final List playersInChunk;
-
-    /** note: this is final */
-    private final ChunkCoordIntPair chunkLocation;
-    private short[] locationOfBlockChange;
-    private int numberOfTilesToUpdate;
+    private final List field_73263_b = new ArrayList();
+    private final ChunkCoordIntPair field_73264_c;
+    private short field_73261_d[];
+    private int field_73262_e;
     private int field_73260_f;
-
-    final PlayerManager myManager;
+    final PlayerManager field_73265_a;
 
     public PlayerInstance(PlayerManager par1PlayerManager, int par2, int par3)
     {
-        this.myManager = par1PlayerManager;
-        this.playersInChunk = new ArrayList();
-        this.locationOfBlockChange = new short[64];
-        this.numberOfTilesToUpdate = 0;
-        this.chunkLocation = new ChunkCoordIntPair(par2, par3);
-        par1PlayerManager.getWorldServer().theChunkProviderServer.loadChunk(par2, par3);
+        field_73265_a = par1PlayerManager;
+        field_73261_d = new short[64];
+        field_73262_e = 0;
+        field_73264_c = new ChunkCoordIntPair(par2, par3);
+        par1PlayerManager.func_72688_a().field_73059_b.loadChunk(par2, par3);
     }
 
-    /**
-     * called for all chunks within the visible radius of the player
-     */
-    public void addPlayerToChunkWatchingList(EntityPlayerMP par1EntityPlayerMP)
+    public void func_73255_a(EntityPlayerMP par1EntityPlayerMP)
     {
-        if (this.playersInChunk.contains(par1EntityPlayerMP))
+        if (field_73263_b.contains(par1EntityPlayerMP))
         {
-            throw new IllegalStateException("Failed to add player. " + par1EntityPlayerMP + " already is in chunk " + this.chunkLocation.chunkXPos + ", " + this.chunkLocation.chunkZPos);
+            throw new IllegalStateException((new StringBuilder()).append("Failed to add player. ").append(par1EntityPlayerMP).append(" already is in chunk ").append(field_73264_c.chunkXPos).append(", ").append(field_73264_c.chunkZPos).toString());
         }
         else
         {
-            this.playersInChunk.add(par1EntityPlayerMP);
-            par1EntityPlayerMP.chunksToLoad.add(this.chunkLocation);
+            field_73263_b.add(par1EntityPlayerMP);
+            par1EntityPlayerMP.field_71129_f.add(field_73264_c);
+            return;
         }
     }
 
-    public void sendThisChunkToPlayer(EntityPlayerMP par1EntityPlayerMP)
+    public void func_73252_b(EntityPlayerMP par1EntityPlayerMP)
     {
-        if (this.playersInChunk.contains(par1EntityPlayerMP))
+        if (!field_73263_b.contains(par1EntityPlayerMP))
         {
-            par1EntityPlayerMP.serverForThisPlayer.sendPacketToPlayer(new Packet51MapChunk(PlayerManager.getWorldServer(this.myManager).getChunkFromChunkCoords(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos), true, 0));
-            this.playersInChunk.remove(par1EntityPlayerMP);
-            par1EntityPlayerMP.chunksToLoad.remove(this.chunkLocation);
+            return;
+        }
 
-            if (this.playersInChunk.isEmpty())
+        par1EntityPlayerMP.netHandler.func_72567_b(new Packet51MapChunk(PlayerManager.func_72692_a(field_73265_a).getChunkFromChunkCoords(field_73264_c.chunkXPos, field_73264_c.chunkZPos), true, 0));
+        field_73263_b.remove(par1EntityPlayerMP);
+        par1EntityPlayerMP.field_71129_f.remove(field_73264_c);
+
+        if (field_73263_b.isEmpty())
+        {
+            long l = (long)field_73264_c.chunkXPos + 0x7fffffffL | (long)field_73264_c.chunkZPos + 0x7fffffffL << 32;
+            PlayerManager.func_72689_b(field_73265_a).remove(l);
+
+            if (field_73262_e > 0)
             {
-                long var2 = (long)this.chunkLocation.chunkXPos + 2147483647L | (long)this.chunkLocation.chunkZPos + 2147483647L << 32;
-                PlayerManager.getChunkWatchers(this.myManager).remove(var2);
-
-                if (this.numberOfTilesToUpdate > 0)
-                {
-                    PlayerManager.getChunkWatchersWithPlayers(this.myManager).remove(this);
-                }
-
-                this.myManager.getWorldServer().theChunkProviderServer.unloadChunksIfNotNearSpawn(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos);
+                PlayerManager.func_72682_c(field_73265_a).remove(this);
             }
+
+            field_73265_a.func_72688_a().field_73059_b.func_73241_b(field_73264_c.chunkXPos, field_73264_c.chunkZPos);
         }
     }
 
-    public void flagChunkForUpdate(int par1, int par2, int par3)
+    public void func_73259_a(int par1, int par2, int par3)
     {
-        if (this.numberOfTilesToUpdate == 0)
+        if (field_73262_e == 0)
         {
-            PlayerManager.getChunkWatchersWithPlayers(this.myManager).add(this);
+            PlayerManager.func_72682_c(field_73265_a).add(this);
         }
 
-        this.field_73260_f |= 1 << (par2 >> 4);
+        field_73260_f |= 1 << (par2 >> 4);
 
-        if (this.numberOfTilesToUpdate < 64)
+        if (field_73262_e < 64)
         {
-            short var4 = (short)(par1 << 12 | par3 << 8 | par2);
+            short word0 = (short)(par1 << 12 | par3 << 8 | par2);
 
-            for (int var5 = 0; var5 < this.numberOfTilesToUpdate; ++var5)
+            for (int i = 0; i < field_73262_e; i++)
             {
-                if (this.locationOfBlockChange[var5] == var4)
+                if (field_73261_d[i] == word0)
                 {
                     return;
                 }
             }
 
-            this.locationOfBlockChange[this.numberOfTilesToUpdate++] = var4;
+            field_73261_d[field_73262_e++] = word0;
         }
     }
 
-    public void sendToAllPlayersWatchingChunk(Packet par1Packet)
+    public void func_73256_a(Packet par1Packet)
     {
-        Iterator var2 = this.playersInChunk.iterator();
+        Iterator iterator = field_73263_b.iterator();
 
-        while (var2.hasNext())
+        do
         {
-            EntityPlayerMP var3 = (EntityPlayerMP)var2.next();
-
-            if (!var3.chunksToLoad.contains(this.chunkLocation))
+            if (!iterator.hasNext())
             {
-                var3.serverForThisPlayer.sendPacketToPlayer(par1Packet);
+                break;
+            }
+
+            EntityPlayerMP entityplayermp = (EntityPlayerMP)iterator.next();
+
+            if (!entityplayermp.field_71129_f.contains(field_73264_c))
+            {
+                entityplayermp.netHandler.func_72567_b(par1Packet);
             }
         }
+        while (true);
     }
 
-    public void sendChunkUpdate()
+    public void func_73254_a()
     {
-        if (this.numberOfTilesToUpdate != 0)
+        if (field_73262_e == 0)
         {
-            int var1;
-            int var2;
-            int var3;
+            return;
+        }
 
-            if (this.numberOfTilesToUpdate == 1)
+        if (field_73262_e == 1)
+        {
+            int i = field_73264_c.chunkXPos * 16 + (field_73261_d[0] >> 12 & 0xf);
+            int l = field_73261_d[0] & 0xff;
+            int k1 = field_73264_c.chunkZPos * 16 + (field_73261_d[0] >> 8 & 0xf);
+            func_73256_a(new Packet53BlockChange(i, l, k1, PlayerManager.func_72692_a(field_73265_a)));
+
+            if (PlayerManager.func_72692_a(field_73265_a).func_72927_d(i, l, k1))
             {
-                var1 = this.chunkLocation.chunkXPos * 16 + (this.locationOfBlockChange[0] >> 12 & 15);
-                var2 = this.locationOfBlockChange[0] & 255;
-                var3 = this.chunkLocation.chunkZPos * 16 + (this.locationOfBlockChange[0] >> 8 & 15);
-                this.sendToAllPlayersWatchingChunk(new Packet53BlockChange(var1, var2, var3, PlayerManager.getWorldServer(this.myManager)));
-
-                if (PlayerManager.getWorldServer(this.myManager).blockHasTileEntity(var1, var2, var3))
-                {
-                    this.sendTileToAllPlayersWatchingChunk(PlayerManager.getWorldServer(this.myManager).getBlockTileEntity(var1, var2, var3));
-                }
+                func_73257_a(PlayerManager.func_72692_a(field_73265_a).getBlockTileEntity(i, l, k1));
             }
-            else
+        }
+        else if (field_73262_e == 64)
+        {
+            int j = field_73264_c.chunkXPos * 16;
+            int i1 = field_73264_c.chunkZPos * 16;
+            func_73256_a(new Packet51MapChunk(PlayerManager.func_72692_a(field_73265_a).getChunkFromChunkCoords(field_73264_c.chunkXPos, field_73264_c.chunkZPos), false, field_73260_f));
+
+            for (int l1 = 0; l1 < 16; l1++)
             {
-                int var4;
-
-                if (this.numberOfTilesToUpdate == 64)
+                if ((field_73260_f & 1 << l1) != 0)
                 {
-                    var1 = this.chunkLocation.chunkXPos * 16;
-                    var2 = this.chunkLocation.chunkZPos * 16;
-                    this.sendToAllPlayersWatchingChunk(new Packet51MapChunk(PlayerManager.getWorldServer(this.myManager).getChunkFromChunkCoords(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos), false, this.field_73260_f));
+                    int j2 = l1 << 4;
+                    List list = PlayerManager.func_72692_a(field_73265_a).func_73049_a(j, j2, i1, j + 16, j2 + 16, i1 + 16);
+                    TileEntity tileentity;
 
-                    for (var3 = 0; var3 < 16; ++var3)
+                    for (Iterator iterator = list.iterator(); iterator.hasNext(); func_73257_a(tileentity))
                     {
-                        if ((this.field_73260_f & 1 << var3) != 0)
-                        {
-                            var4 = var3 << 4;
-                            List var5 = PlayerManager.getWorldServer(this.myManager).getAllTileEntityInBox(var1, var4, var2, var1 + 16, var4 + 16, var2 + 16);
-                            Iterator var6 = var5.iterator();
-
-                            while (var6.hasNext())
-                            {
-                                TileEntity var7 = (TileEntity)var6.next();
-                                this.sendTileToAllPlayersWatchingChunk(var7);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    this.sendToAllPlayersWatchingChunk(new Packet52MultiBlockChange(this.chunkLocation.chunkXPos, this.chunkLocation.chunkZPos, this.locationOfBlockChange, this.numberOfTilesToUpdate, PlayerManager.getWorldServer(this.myManager)));
-
-                    for (var1 = 0; var1 < this.numberOfTilesToUpdate; ++var1)
-                    {
-                        var2 = this.chunkLocation.chunkXPos * 16 + (this.locationOfBlockChange[var1] >> 12 & 15);
-                        var3 = this.locationOfBlockChange[var1] & 255;
-                        var4 = this.chunkLocation.chunkZPos * 16 + (this.locationOfBlockChange[var1] >> 8 & 15);
-
-                        if (PlayerManager.getWorldServer(this.myManager).blockHasTileEntity(var2, var3, var4))
-                        {
-                            this.sendTileToAllPlayersWatchingChunk(PlayerManager.getWorldServer(this.myManager).getBlockTileEntity(var2, var3, var4));
-                        }
+                        tileentity = (TileEntity)iterator.next();
                     }
                 }
             }
-
-            this.numberOfTilesToUpdate = 0;
-            this.field_73260_f = 0;
         }
+        else
+        {
+            func_73256_a(new Packet52MultiBlockChange(field_73264_c.chunkXPos, field_73264_c.chunkZPos, field_73261_d, field_73262_e, PlayerManager.func_72692_a(field_73265_a)));
+
+            for (int k = 0; k < field_73262_e; k++)
+            {
+                int j1 = field_73264_c.chunkXPos * 16 + (field_73261_d[k] >> 12 & 0xf);
+                int i2 = field_73261_d[k] & 0xff;
+                int k2 = field_73264_c.chunkZPos * 16 + (field_73261_d[k] >> 8 & 0xf);
+
+                if (PlayerManager.func_72692_a(field_73265_a).func_72927_d(j1, i2, k2))
+                {
+                    func_73257_a(PlayerManager.func_72692_a(field_73265_a).getBlockTileEntity(j1, i2, k2));
+                }
+            }
+        }
+
+        field_73262_e = 0;
+        field_73260_f = 0;
     }
 
-    private void sendTileToAllPlayersWatchingChunk(TileEntity par1TileEntity)
+    private void func_73257_a(TileEntity par1TileEntity)
     {
         if (par1TileEntity != null)
         {
-            Packet var2 = par1TileEntity.getAuxillaryInfoPacket();
+            Packet packet = par1TileEntity.func_70319_e();
 
-            if (var2 != null)
+            if (packet != null)
             {
-                this.sendToAllPlayersWatchingChunk(var2);
+                func_73256_a(packet);
             }
         }
     }
 
-    static ChunkCoordIntPair getChunkLocation(PlayerInstance par0PlayerInstance)
+    static ChunkCoordIntPair func_73253_a(PlayerInstance par0PlayerInstance)
     {
-        return par0PlayerInstance.chunkLocation;
+        return par0PlayerInstance.field_73264_c;
     }
 
-    static List getPlayersInChunk(PlayerInstance par0PlayerInstance)
+    static List func_73258_b(PlayerInstance par0PlayerInstance)
     {
-        return par0PlayerInstance.playersInChunk;
+        return par0PlayerInstance.field_73263_b;
     }
 }

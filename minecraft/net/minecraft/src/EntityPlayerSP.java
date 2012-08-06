@@ -1,5 +1,6 @@
 package net.minecraft.src;
 
+import java.util.Random;
 import net.minecraft.client.Minecraft;
 
 public class EntityPlayerSP extends EntityPlayer
@@ -12,30 +13,35 @@ public class EntityPlayerSP extends EntityPlayer
      * sprint, aka enough food on the ground etc) it sets this to 7. If it's pressed and it's greater than 0 enable
      * sprinting.
      */
-    protected int sprintToggleTimer = 0;
+    protected int sprintToggleTimer;
 
     /** Ticks left before sprinting is disabled. */
-    public int sprintingTicksLeft = 0;
+    public int sprintingTicksLeft;
     public float renderArmYaw;
     public float renderArmPitch;
     public float prevRenderArmYaw;
     public float prevRenderArmPitch;
-    private MouseFilter field_71162_ch = new MouseFilter();
-    private MouseFilter field_71160_ci = new MouseFilter();
-    private MouseFilter field_71161_cj = new MouseFilter();
+    private MouseFilter field_71162_ch;
+    private MouseFilter field_71160_ci;
+    private MouseFilter field_71161_cj;
 
     public EntityPlayerSP(Minecraft par1Minecraft, World par2World, Session par3Session, int par4)
     {
         super(par2World);
-        this.mc = par1Minecraft;
-        this.dimension = par4;
+        sprintToggleTimer = 0;
+        sprintingTicksLeft = 0;
+        field_71162_ch = new MouseFilter();
+        field_71160_ci = new MouseFilter();
+        field_71161_cj = new MouseFilter();
+        mc = par1Minecraft;
+        dimension = par4;
 
         if (par3Session != null && par3Session.username != null && par3Session.username.length() > 0)
         {
-            this.skinUrl = "http://skins.minecraft.net/MinecraftSkins/" + StringUtils.stripControlCodes(par3Session.username) + ".png";
+            skinUrl = (new StringBuilder()).append("http://skins.minecraft.net/MinecraftSkins/").append(StringUtils.func_76338_a(par3Session.username)).append(".png").toString();
         }
 
-        this.username = par3Session.username;
+        username = par3Session.username;
     }
 
     /**
@@ -49,13 +55,13 @@ public class EntityPlayerSP extends EntityPlayer
     public void updateEntityActionState()
     {
         super.updateEntityActionState();
-        this.moveStrafing = this.movementInput.moveStrafe;
-        this.moveForward = this.movementInput.moveForward;
-        this.isJumping = this.movementInput.jump;
-        this.prevRenderArmYaw = this.renderArmYaw;
-        this.prevRenderArmPitch = this.renderArmPitch;
-        this.renderArmPitch = (float)((double)this.renderArmPitch + (double)(this.rotationPitch - this.renderArmPitch) * 0.5D);
-        this.renderArmYaw = (float)((double)this.renderArmYaw + (double)(this.rotationYaw - this.renderArmYaw) * 0.5D);
+        moveStrafing = movementInput.moveStrafe;
+        moveForward = movementInput.moveForward;
+        isJumping = movementInput.jump;
+        prevRenderArmYaw = renderArmYaw;
+        prevRenderArmPitch = renderArmPitch;
+        renderArmPitch += (double)(rotationPitch - renderArmPitch) * 0.5D;
+        renderArmYaw += (double)(rotationYaw - renderArmYaw) * 0.5D;
     }
 
     /**
@@ -72,167 +78,166 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void onLivingUpdate()
     {
-        if (this.sprintingTicksLeft > 0)
+        if (sprintingTicksLeft > 0)
         {
-            --this.sprintingTicksLeft;
+            sprintingTicksLeft--;
 
-            if (this.sprintingTicksLeft == 0)
+            if (sprintingTicksLeft == 0)
             {
-                this.setSprinting(false);
+                setSprinting(false);
             }
         }
 
-        if (this.sprintToggleTimer > 0)
+        if (sprintToggleTimer > 0)
         {
-            --this.sprintToggleTimer;
+            sprintToggleTimer--;
         }
 
-        if (this.mc.playerController.func_78747_a())
+        if (mc.playerControllerMP.func_78747_a())
         {
-            this.posX = this.posZ = 0.5D;
-            this.posX = 0.0D;
-            this.posZ = 0.0D;
-            this.rotationYaw = (float)this.ticksExisted / 12.0F;
-            this.rotationPitch = 10.0F;
-            this.posY = 68.5D;
+            posX = posZ = 0.5D;
+            posX = 0.0D;
+            posZ = 0.0D;
+            rotationYaw = (float)ticksExisted / 12F;
+            rotationPitch = 10F;
+            posY = 68.5D;
+            return;
+        }
+
+        if (!mc.statFileWriter.hasAchievementUnlocked(AchievementList.openInventory))
+        {
+            mc.guiAchievement.queueAchievementInformation(AchievementList.openInventory);
+        }
+
+        prevTimeInPortal = timeInPortal;
+
+        if (inPortal)
+        {
+            if (mc.currentScreen != null)
+            {
+                mc.displayGuiScreen(null);
+            }
+
+            if (timeInPortal == 0.0F)
+            {
+                mc.sndManager.playSoundFX("portal.trigger", 1.0F, rand.nextFloat() * 0.4F + 0.8F);
+            }
+
+            timeInPortal += 0.0125F;
+
+            if (timeInPortal >= 1.0F)
+            {
+                timeInPortal = 1.0F;
+            }
+
+            inPortal = false;
+        }
+        else if (isPotionActive(Potion.confusion) && getActivePotionEffect(Potion.confusion).getDuration() > 60)
+        {
+            timeInPortal += 0.006666667F;
+
+            if (timeInPortal > 1.0F)
+            {
+                timeInPortal = 1.0F;
+            }
         }
         else
         {
-            if (!this.mc.statFileWriter.hasAchievementUnlocked(AchievementList.openInventory))
+            if (timeInPortal > 0.0F)
             {
-                this.mc.guiAchievement.queueAchievementInformation(AchievementList.openInventory);
+                timeInPortal -= 0.05F;
             }
 
-            this.prevTimeInPortal = this.timeInPortal;
-
-            if (this.inPortal)
+            if (timeInPortal < 0.0F)
             {
-                if (this.mc.currentScreen != null)
-                {
-                    this.mc.displayGuiScreen((GuiScreen)null);
-                }
-
-                if (this.timeInPortal == 0.0F)
-                {
-                    this.mc.sndManager.playSoundFX("portal.trigger", 1.0F, this.rand.nextFloat() * 0.4F + 0.8F);
-                }
-
-                this.timeInPortal += 0.0125F;
-
-                if (this.timeInPortal >= 1.0F)
-                {
-                    this.timeInPortal = 1.0F;
-                }
-
-                this.inPortal = false;
+                timeInPortal = 0.0F;
             }
-            else if (this.isPotionActive(Potion.confusion) && this.getActivePotionEffect(Potion.confusion).getDuration() > 60)
-            {
-                this.timeInPortal += 0.006666667F;
+        }
 
-                if (this.timeInPortal > 1.0F)
-                {
-                    this.timeInPortal = 1.0F;
-                }
+        if (timeUntilPortal > 0)
+        {
+            timeUntilPortal--;
+        }
+
+        boolean flag = movementInput.jump;
+        float f = 0.8F;
+        boolean flag1 = movementInput.moveForward >= f;
+        movementInput.updatePlayerMoveState();
+
+        if (isUsingItem())
+        {
+            movementInput.moveStrafe *= 0.2F;
+            movementInput.moveForward *= 0.2F;
+            sprintToggleTimer = 0;
+        }
+
+        if (movementInput.sneak && ySize < 0.2F)
+        {
+            ySize = 0.2F;
+        }
+
+        pushOutOfBlocks(posX - (double)width * 0.34999999999999998D, boundingBox.minY + 0.5D, posZ + (double)width * 0.34999999999999998D);
+        pushOutOfBlocks(posX - (double)width * 0.34999999999999998D, boundingBox.minY + 0.5D, posZ - (double)width * 0.34999999999999998D);
+        pushOutOfBlocks(posX + (double)width * 0.34999999999999998D, boundingBox.minY + 0.5D, posZ - (double)width * 0.34999999999999998D);
+        pushOutOfBlocks(posX + (double)width * 0.34999999999999998D, boundingBox.minY + 0.5D, posZ + (double)width * 0.34999999999999998D);
+        boolean flag2 = (float)getFoodStats().getFoodLevel() > 6F || capabilities.allowFlying;
+
+        if (onGround && !flag1 && movementInput.moveForward >= f && !isSprinting() && flag2 && !isUsingItem() && !isPotionActive(Potion.blindness))
+        {
+            if (sprintToggleTimer == 0)
+            {
+                sprintToggleTimer = 7;
             }
             else
             {
-                if (this.timeInPortal > 0.0F)
-                {
-                    this.timeInPortal -= 0.05F;
-                }
-
-                if (this.timeInPortal < 0.0F)
-                {
-                    this.timeInPortal = 0.0F;
-                }
+                setSprinting(true);
+                sprintToggleTimer = 0;
             }
+        }
 
-            if (this.timeUntilPortal > 0)
+        if (isSneaking())
+        {
+            sprintToggleTimer = 0;
+        }
+
+        if (isSprinting() && (movementInput.moveForward < f || isCollidedHorizontally || !flag2))
+        {
+            setSprinting(false);
+        }
+
+        if (capabilities.allowFlying && !flag && movementInput.jump)
+        {
+            if (flyToggleTimer == 0)
             {
-                --this.timeUntilPortal;
+                flyToggleTimer = 7;
             }
-
-            boolean var1 = this.movementInput.jump;
-            float var2 = 0.8F;
-            boolean var3 = this.movementInput.moveForward >= var2;
-            this.movementInput.updatePlayerMoveState();
-
-            if (this.isUsingItem())
+            else
             {
-                this.movementInput.moveStrafe *= 0.2F;
-                this.movementInput.moveForward *= 0.2F;
-                this.sprintToggleTimer = 0;
+                capabilities.isFlying = !capabilities.isFlying;
+                func_71016_p();
+                flyToggleTimer = 0;
             }
+        }
 
-            if (this.movementInput.sneak && this.ySize < 0.2F)
+        if (capabilities.isFlying)
+        {
+            if (movementInput.sneak)
             {
-                this.ySize = 0.2F;
+                motionY -= 0.14999999999999999D;
             }
 
-            this.pushOutOfBlocks(this.posX - (double)this.width * 0.35D, this.boundingBox.minY + 0.5D, this.posZ + (double)this.width * 0.35D);
-            this.pushOutOfBlocks(this.posX - (double)this.width * 0.35D, this.boundingBox.minY + 0.5D, this.posZ - (double)this.width * 0.35D);
-            this.pushOutOfBlocks(this.posX + (double)this.width * 0.35D, this.boundingBox.minY + 0.5D, this.posZ - (double)this.width * 0.35D);
-            this.pushOutOfBlocks(this.posX + (double)this.width * 0.35D, this.boundingBox.minY + 0.5D, this.posZ + (double)this.width * 0.35D);
-            boolean var4 = (float)this.getFoodStats().getFoodLevel() > 6.0F || this.capabilities.allowFlying;
-
-            if (this.onGround && !var3 && this.movementInput.moveForward >= var2 && !this.isSprinting() && var4 && !this.isUsingItem() && !this.isPotionActive(Potion.blindness))
+            if (movementInput.jump)
             {
-                if (this.sprintToggleTimer == 0)
-                {
-                    this.sprintToggleTimer = 7;
-                }
-                else
-                {
-                    this.setSprinting(true);
-                    this.sprintToggleTimer = 0;
-                }
+                motionY += 0.14999999999999999D;
             }
+        }
 
-            if (this.isSneaking())
-            {
-                this.sprintToggleTimer = 0;
-            }
+        super.onLivingUpdate();
 
-            if (this.isSprinting() && (this.movementInput.moveForward < var2 || this.isCollidedHorizontally || !var4))
-            {
-                this.setSprinting(false);
-            }
-
-            if (this.capabilities.allowFlying && !var1 && this.movementInput.jump)
-            {
-                if (this.flyToggleTimer == 0)
-                {
-                    this.flyToggleTimer = 7;
-                }
-                else
-                {
-                    this.capabilities.isFlying = !this.capabilities.isFlying;
-                    this.sendPlayerAbilities();
-                    this.flyToggleTimer = 0;
-                }
-            }
-
-            if (this.capabilities.isFlying)
-            {
-                if (this.movementInput.sneak)
-                {
-                    this.motionY -= 0.15D;
-                }
-
-                if (this.movementInput.jump)
-                {
-                    this.motionY += 0.15D;
-                }
-            }
-
-            super.onLivingUpdate();
-
-            if (this.onGround && this.capabilities.isFlying)
-            {
-                this.capabilities.isFlying = false;
-                this.sendPlayerAbilities();
-            }
+        if (onGround && capabilities.isFlying)
+        {
+            capabilities.isFlying = false;
+            func_71016_p();
         }
     }
 
@@ -241,33 +246,33 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public float getFOVMultiplier()
     {
-        float var1 = 1.0F;
+        float f = 1.0F;
 
-        if (this.capabilities.isFlying)
+        if (capabilities.isFlying)
         {
-            var1 *= 1.1F;
+            f *= 1.1F;
         }
 
-        var1 *= (this.landMovementFactor * this.getSpeedModifier() / this.speedOnGround + 1.0F) / 2.0F;
+        f *= ((landMovementFactor * getSpeedModifier()) / speedOnGround + 1.0F) / 2.0F;
 
-        if (this.isUsingItem() && this.getItemInUse().itemID == Item.bow.shiftedIndex)
+        if (isUsingItem() && getItemInUse().itemID == Item.bow.shiftedIndex)
         {
-            int var2 = this.getItemInUseDuration();
-            float var3 = (float)var2 / 20.0F;
+            int i = getItemInUseDuration();
+            float f1 = (float)i / 20F;
 
-            if (var3 > 1.0F)
+            if (f1 > 1.0F)
             {
-                var3 = 1.0F;
+                f1 = 1.0F;
             }
             else
             {
-                var3 *= var3;
+                f1 *= f1;
             }
 
-            var1 *= 1.0F - var3 * 0.15F;
+            f *= 1.0F - f1 * 0.15F;
         }
 
-        return var1;
+        return f;
     }
 
     /**
@@ -276,13 +281,13 @@ public class EntityPlayerSP extends EntityPlayer
     public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
     {
         super.writeEntityToNBT(par1NBTTagCompound);
-        par1NBTTagCompound.setInteger("Score", this.score);
+        par1NBTTagCompound.setInteger("Score", score);
     }
 
     public void updateCloak()
     {
-        this.playerCloakUrl = "http://skins.minecraft.net/MinecraftCloaks/" + StringUtils.stripControlCodes(this.username) + ".png";
-        this.cloakUrl = this.playerCloakUrl;
+        playerCloakUrl = (new StringBuilder()).append("http://skins.minecraft.net/MinecraftCloaks/").append(StringUtils.func_76338_a(username)).append(".png").toString();
+        cloakUrl = playerCloakUrl;
     }
 
     /**
@@ -291,7 +296,7 @@ public class EntityPlayerSP extends EntityPlayer
     public void readEntityFromNBT(NBTTagCompound par1NBTTagCompound)
     {
         super.readEntityFromNBT(par1NBTTagCompound);
-        this.score = par1NBTTagCompound.getInteger("Score");
+        score = par1NBTTagCompound.getInteger("Score");
     }
 
     /**
@@ -300,7 +305,7 @@ public class EntityPlayerSP extends EntityPlayer
     public void closeScreen()
     {
         super.closeScreen();
-        this.mc.displayGuiScreen((GuiScreen)null);
+        mc.displayGuiScreen(null);
     }
 
     /**
@@ -308,23 +313,20 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void displayGUIEditSign(TileEntitySign par1TileEntitySign)
     {
-        this.mc.displayGuiScreen(new GuiEditSign(par1TileEntitySign));
+        mc.displayGuiScreen(new GuiEditSign(par1TileEntitySign));
     }
 
-    /**
-     * Displays the GUI for interacting with a book.
-     */
-    public void displayGUIBook(ItemStack par1ItemStack)
+    public void func_71048_c(ItemStack par1ItemStack)
     {
-        Item var2 = par1ItemStack.getItem();
+        Item item = par1ItemStack.getItem();
 
-        if (var2 == Item.writtenBook)
+        if (item == Item.field_77823_bG)
         {
-            this.mc.displayGuiScreen(new GuiScreenBook(this, par1ItemStack, false));
+            mc.displayGuiScreen(new GuiScreenBook(this, par1ItemStack, false));
         }
-        else if (var2 == Item.writableBook)
+        else if (item == Item.field_77821_bF)
         {
-            this.mc.displayGuiScreen(new GuiScreenBook(this, par1ItemStack, true));
+            mc.displayGuiScreen(new GuiScreenBook(this, par1ItemStack, true));
         }
     }
 
@@ -333,20 +335,20 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void displayGUIChest(IInventory par1IInventory)
     {
-        this.mc.displayGuiScreen(new GuiChest(this.inventory, par1IInventory));
+        mc.displayGuiScreen(new GuiChest(inventory, par1IInventory));
     }
 
     /**
      * Displays the crafting GUI for a workbench.
      */
-    public void displayGUIWorkbench(int par1, int par2, int par3)
+    public void displayWorkbenchGUI(int par1, int par2, int par3)
     {
-        this.mc.displayGuiScreen(new GuiCrafting(this.inventory, this.worldObj, par1, par2, par3));
+        mc.displayGuiScreen(new GuiCrafting(inventory, worldObj, par1, par2, par3));
     }
 
     public void displayGUIEnchantment(int par1, int par2, int par3)
     {
-        this.mc.displayGuiScreen(new GuiEnchantment(this.inventory, this.worldObj, par1, par2, par3));
+        mc.displayGuiScreen(new GuiEnchantment(inventory, worldObj, par1, par2, par3));
     }
 
     /**
@@ -354,7 +356,7 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void displayGUIFurnace(TileEntityFurnace par1TileEntityFurnace)
     {
-        this.mc.displayGuiScreen(new GuiFurnace(this.inventory, par1TileEntityFurnace));
+        mc.displayGuiScreen(new GuiFurnace(inventory, par1TileEntityFurnace));
     }
 
     /**
@@ -362,7 +364,7 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void displayGUIBrewingStand(TileEntityBrewingStand par1TileEntityBrewingStand)
     {
-        this.mc.displayGuiScreen(new GuiBrewingStand(this.inventory, par1TileEntityBrewingStand));
+        mc.displayGuiScreen(new GuiBrewingStand(inventory, par1TileEntityBrewingStand));
     }
 
     /**
@@ -370,12 +372,12 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void displayGUIDispenser(TileEntityDispenser par1TileEntityDispenser)
     {
-        this.mc.displayGuiScreen(new GuiDispenser(this.inventory, par1TileEntityDispenser));
+        mc.displayGuiScreen(new GuiDispenser(inventory, par1TileEntityDispenser));
     }
 
-    public void displayGUIMerchant(IMerchant par1IMerchant)
+    public void func_71030_a(IMerchant par1IMerchant)
     {
-        this.mc.displayGuiScreen(new GuiMerchant(this.inventory, par1IMerchant, this.worldObj));
+        mc.displayGuiScreen(new GuiMerchant(inventory, par1IMerchant, worldObj));
     }
 
     /**
@@ -383,13 +385,13 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void onCriticalHit(Entity par1Entity)
     {
-        this.mc.effectRenderer.addEffect(new EntityCrit2FX(this.mc.theWorld, par1Entity));
+        mc.effectRenderer.addEffect(new EntityCrit2FX(mc.theWorld, par1Entity));
     }
 
     public void onEnchantmentCritical(Entity par1Entity)
     {
-        EntityCrit2FX var2 = new EntityCrit2FX(this.mc.theWorld, par1Entity, "magicCrit");
-        this.mc.effectRenderer.addEffect(var2);
+        EntityCrit2FX entitycrit2fx = new EntityCrit2FX(mc.theWorld, par1Entity, "magicCrit");
+        mc.effectRenderer.addEffect(entitycrit2fx);
     }
 
     /**
@@ -397,7 +399,7 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void onItemPickup(Entity par1Entity, int par2)
     {
-        this.mc.effectRenderer.addEffect(new EntityPickupFX(this.mc.theWorld, par1Entity, this, -0.5F));
+        mc.effectRenderer.addEffect(new EntityPickupFX(mc.theWorld, par1Entity, this, -0.5F));
     }
 
     /**
@@ -405,7 +407,7 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public boolean isSneaking()
     {
-        return this.movementInput.sneak && !this.sleeping;
+        return movementInput.sneak && !sleeping;
     }
 
     /**
@@ -413,24 +415,24 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void setHealth(int par1)
     {
-        int var2 = this.getHealth() - par1;
+        int i = getHealth() - par1;
 
-        if (var2 <= 0)
+        if (i <= 0)
         {
-            this.setEntityHealth(par1);
+            setEntityHealth(par1);
 
-            if (var2 < 0)
+            if (i < 0)
             {
-                this.hurtResistantTime = this.maxHurtResistantTime / 2;
+                heartsLife = heartsHalvesLife / 2;
             }
         }
         else
         {
-            this.lastDamage = var2;
-            this.setEntityHealth(this.getHealth());
-            this.hurtResistantTime = this.maxHurtResistantTime;
-            this.damageEntity(DamageSource.generic, var2);
-            this.hurtTime = this.maxHurtTime = 10;
+            lastDamage = i;
+            setEntityHealth(getHealth());
+            heartsLife = heartsHalvesLife;
+            damageEntity(DamageSource.generic, i);
+            hurtTime = maxHurtTime = 10;
         }
     }
 
@@ -439,7 +441,7 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void addChatMessage(String par1Str)
     {
-        this.mc.ingameGUI.func_73827_b().func_73757_a(par1Str, new Object[0]);
+        mc.ingameGUI.func_73827_b().func_73757_a(par1Str, new Object[0]);
     }
 
     /**
@@ -447,32 +449,34 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void addStat(StatBase par1StatBase, int par2)
     {
-        if (par1StatBase != null)
+        if (par1StatBase == null)
         {
-            if (par1StatBase.isAchievement())
-            {
-                Achievement var3 = (Achievement)par1StatBase;
+            return;
+        }
 
-                if (var3.parentAchievement == null || this.mc.statFileWriter.hasAchievementUnlocked(var3.parentAchievement))
+        if (par1StatBase.isAchievement())
+        {
+            Achievement achievement = (Achievement)par1StatBase;
+
+            if (achievement.parentAchievement == null || mc.statFileWriter.hasAchievementUnlocked(achievement.parentAchievement))
+            {
+                if (!mc.statFileWriter.hasAchievementUnlocked(achievement))
                 {
-                    if (!this.mc.statFileWriter.hasAchievementUnlocked(var3))
-                    {
-                        this.mc.guiAchievement.queueTakenAchievement(var3);
-                    }
-
-                    this.mc.statFileWriter.readStat(par1StatBase, par2);
+                    mc.guiAchievement.queueTakenAchievement(achievement);
                 }
+
+                mc.statFileWriter.readStat(par1StatBase, par2);
             }
-            else
-            {
-                this.mc.statFileWriter.readStat(par1StatBase, par2);
-            }
+        }
+        else
+        {
+            mc.statFileWriter.readStat(par1StatBase, par2);
         }
     }
 
     private boolean isBlockTranslucent(int par1, int par2, int par3)
     {
-        return this.worldObj.isBlockNormalCube(par1, par2, par3);
+        return worldObj.isBlockNormalCube(par1, par2, par3);
     }
 
     /**
@@ -480,65 +484,65 @@ public class EntityPlayerSP extends EntityPlayer
      */
     protected boolean pushOutOfBlocks(double par1, double par3, double par5)
     {
-        int var7 = MathHelper.floor_double(par1);
-        int var8 = MathHelper.floor_double(par3);
-        int var9 = MathHelper.floor_double(par5);
-        double var10 = par1 - (double)var7;
-        double var12 = par5 - (double)var9;
+        int i = MathHelper.floor_double(par1);
+        int j = MathHelper.floor_double(par3);
+        int k = MathHelper.floor_double(par5);
+        double d = par1 - (double)i;
+        double d1 = par5 - (double)k;
 
-        if (this.isBlockTranslucent(var7, var8, var9) || this.isBlockTranslucent(var7, var8 + 1, var9))
+        if (isBlockTranslucent(i, j, k) || isBlockTranslucent(i, j + 1, k))
         {
-            boolean var14 = !this.isBlockTranslucent(var7 - 1, var8, var9) && !this.isBlockTranslucent(var7 - 1, var8 + 1, var9);
-            boolean var15 = !this.isBlockTranslucent(var7 + 1, var8, var9) && !this.isBlockTranslucent(var7 + 1, var8 + 1, var9);
-            boolean var16 = !this.isBlockTranslucent(var7, var8, var9 - 1) && !this.isBlockTranslucent(var7, var8 + 1, var9 - 1);
-            boolean var17 = !this.isBlockTranslucent(var7, var8, var9 + 1) && !this.isBlockTranslucent(var7, var8 + 1, var9 + 1);
-            byte var18 = -1;
-            double var19 = 9999.0D;
+            boolean flag = !isBlockTranslucent(i - 1, j, k) && !isBlockTranslucent(i - 1, j + 1, k);
+            boolean flag1 = !isBlockTranslucent(i + 1, j, k) && !isBlockTranslucent(i + 1, j + 1, k);
+            boolean flag2 = !isBlockTranslucent(i, j, k - 1) && !isBlockTranslucent(i, j + 1, k - 1);
+            boolean flag3 = !isBlockTranslucent(i, j, k + 1) && !isBlockTranslucent(i, j + 1, k + 1);
+            byte byte0 = -1;
+            double d2 = 9999D;
 
-            if (var14 && var10 < var19)
+            if (flag && d < d2)
             {
-                var19 = var10;
-                var18 = 0;
+                d2 = d;
+                byte0 = 0;
             }
 
-            if (var15 && 1.0D - var10 < var19)
+            if (flag1 && 1.0D - d < d2)
             {
-                var19 = 1.0D - var10;
-                var18 = 1;
+                d2 = 1.0D - d;
+                byte0 = 1;
             }
 
-            if (var16 && var12 < var19)
+            if (flag2 && d1 < d2)
             {
-                var19 = var12;
-                var18 = 4;
+                d2 = d1;
+                byte0 = 4;
             }
 
-            if (var17 && 1.0D - var12 < var19)
+            if (flag3 && 1.0D - d1 < d2)
             {
-                var19 = 1.0D - var12;
-                var18 = 5;
+                double d3 = 1.0D - d1;
+                byte0 = 5;
             }
 
-            float var21 = 0.1F;
+            float f = 0.1F;
 
-            if (var18 == 0)
+            if (byte0 == 0)
             {
-                this.motionX = (double)(-var21);
+                motionX = -f;
             }
 
-            if (var18 == 1)
+            if (byte0 == 1)
             {
-                this.motionX = (double)var21;
+                motionX = f;
             }
 
-            if (var18 == 4)
+            if (byte0 == 4)
             {
-                this.motionZ = (double)(-var21);
+                motionZ = -f;
             }
 
-            if (var18 == 5)
+            if (byte0 == 5)
             {
-                this.motionZ = (double)var21;
+                motionZ = f;
             }
         }
 
@@ -551,7 +555,7 @@ public class EntityPlayerSP extends EntityPlayer
     public void setSprinting(boolean par1)
     {
         super.setSprinting(par1);
-        this.sprintingTicksLeft = par1 ? 600 : 0;
+        sprintingTicksLeft = par1 ? 600 : 0;
     }
 
     /**
@@ -559,21 +563,18 @@ public class EntityPlayerSP extends EntityPlayer
      */
     public void setXPStats(float par1, int par2, int par3)
     {
-        this.experience = par1;
-        this.experienceTotal = par2;
-        this.experienceLevel = par3;
+        experience = par1;
+        experienceTotal = par2;
+        experienceLevel = par3;
     }
 
-    public void sendChatToPlayer(String par1Str)
+    public void func_70006_a(String par1Str)
     {
-        this.mc.ingameGUI.func_73827_b().func_73765_a(par1Str);
+        mc.ingameGUI.func_73827_b().func_73765_a(par1Str);
     }
 
-    /**
-     * Returns true if the command sender is allowed to use the given command.
-     */
-    public boolean canCommandSenderUseCommand(String par1Str)
+    public boolean func_70003_b(String par1Str)
     {
-        return this.worldObj.getWorldInfo().areCommandsAllowed();
+        return worldObj.getWorldInfo().func_76086_u();
     }
 }

@@ -3,21 +3,22 @@ package net.minecraft.src;
 public class EntityDragonBase extends EntityLiving
 {
     /** The maximum health of the Entity. */
-    protected int maxHealth = 100;
+    protected int maxHealth;
 
     public EntityDragonBase(World par1World)
     {
         super(par1World);
+        maxHealth = 100;
     }
 
     public int getMaxHealth()
     {
-        return this.maxHealth;
+        return maxHealth;
     }
 
     public boolean attackEntityFromPart(EntityDragonPart par1EntityDragonPart, DamageSource par2DamageSource, int par3)
     {
-        return this.attackEntityFrom(par2DamageSource, par3);
+        return attackEntityFrom(par2DamageSource, par3);
     }
 
     /**
@@ -34,5 +35,16 @@ public class EntityDragonBase extends EntityLiving
     protected boolean superAttackFrom(DamageSource par1DamageSource, int par2)
     {
         return super.attackEntityFrom(par1DamageSource, par2);
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Ender Dragon";
+    }
+    
+    public String getBreed()
+    {
+    	return "Dragon";
     }
 }

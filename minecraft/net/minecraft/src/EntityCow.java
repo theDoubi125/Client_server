@@ -1,21 +1,23 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntityCow extends EntityAnimal
 {
     public EntityCow(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/cow.png";
-        this.setSize(0.9F, 1.3F);
-        this.getNavigator().setAvoidsWater(true);
-        this.tasks.addTask(0, new EntityAISwimming(this));
-        this.tasks.addTask(1, new EntityAIPanic(this, 0.38F));
-        this.tasks.addTask(2, new EntityAIMate(this, 0.2F));
-        this.tasks.addTask(3, new EntityAITempt(this, 0.25F, Item.wheat.shiftedIndex, false));
-        this.tasks.addTask(4, new EntityAIFollowParent(this, 0.25F));
-        this.tasks.addTask(5, new EntityAIWander(this, 0.2F));
-        this.tasks.addTask(6, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
-        this.tasks.addTask(7, new EntityAILookIdle(this));
+        texture = "/mob/cow.png";
+        setSize(0.9F, 1.3F);
+        getNavigator().setAvoidsWater(true);
+        tasks.addTask(0, new EntityAISwimming(this));
+        tasks.addTask(1, new EntityAIPanic(this, 0.38F));
+        tasks.addTask(2, new EntityAIMate(this, 0.2F));
+        tasks.addTask(3, new EntityAITempt(this, 0.25F, Item.wheat.shiftedIndex, false));
+        tasks.addTask(4, new EntityAIFollowParent(this, 0.25F));
+        tasks.addTask(5, new EntityAIWander(this, 0.2F));
+        tasks.addTask(6, new EntityAIWatchClosest(this, net.minecraft.src.EntityPlayer.class, 6F));
+        tasks.addTask(7, new EntityAILookIdle(this));
     }
 
     /**
@@ -76,25 +78,24 @@ public class EntityCow extends EntityAnimal
      */
     protected void dropFewItems(boolean par1, int par2)
     {
-        int var3 = this.rand.nextInt(3) + this.rand.nextInt(1 + par2);
-        int var4;
+        int i = rand.nextInt(3) + rand.nextInt(1 + par2);
 
-        for (var4 = 0; var4 < var3; ++var4)
+        for (int j = 0; j < i; j++)
         {
-            this.dropItem(Item.leather.shiftedIndex, 1);
+            dropItem(Item.leather.shiftedIndex, 1);
         }
 
-        var3 = this.rand.nextInt(3) + 1 + this.rand.nextInt(1 + par2);
+        i = rand.nextInt(3) + 1 + rand.nextInt(1 + par2);
 
-        for (var4 = 0; var4 < var3; ++var4)
+        for (int k = 0; k < i; k++)
         {
-            if (this.isBurning())
+            if (isBurning())
             {
-                this.dropItem(Item.beefCooked.shiftedIndex, 1);
+                dropItem(Item.beefCooked.shiftedIndex, 1);
             }
             else
             {
-                this.dropItem(Item.beefRaw.shiftedIndex, 1);
+                dropItem(Item.beefRaw.shiftedIndex, 1);
             }
         }
     }
@@ -104,11 +105,11 @@ public class EntityCow extends EntityAnimal
      */
     public boolean interact(EntityPlayer par1EntityPlayer)
     {
-        ItemStack var2 = par1EntityPlayer.inventory.getCurrentItem();
+        ItemStack itemstack = par1EntityPlayer.inventory.getCurrentItem();
 
-        if (var2 != null && var2.itemID == Item.bucketEmpty.shiftedIndex)
+        if (itemstack != null && itemstack.itemID == Item.bucketEmpty.shiftedIndex)
         {
-            if (--var2.stackSize <= 0)
+            if (--itemstack.stackSize <= 0)
             {
                 par1EntityPlayer.inventory.setInventorySlotContents(par1EntityPlayer.inventory.currentItem, new ItemStack(Item.bucketMilk));
             }
@@ -130,6 +131,12 @@ public class EntityCow extends EntityAnimal
      */
     public EntityAnimal spawnBabyAnimal(EntityAnimal par1EntityAnimal)
     {
-        return new EntityCow(this.worldObj);
+        return new EntityCow(worldObj);
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Cow";
     }
 }

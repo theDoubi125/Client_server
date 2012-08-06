@@ -9,160 +9,142 @@ public class TextureCompassFX extends TextureFX
 {
     /** A reference to the Minecraft object. */
     private Minecraft mc;
-
-    /** Holds the image of the compass from items.png in rgb format. */
-    private int[] compassIconImageData = new int[256];
+    private int compassIconImageData[];
     private double field_76868_i;
     private double field_76866_j;
 
     public TextureCompassFX(Minecraft par1Minecraft)
     {
         super(Item.compass.getIconFromDamage(0));
-        this.mc = par1Minecraft;
-        this.tileImage = 1;
+        compassIconImageData = new int[256];
+        mc = par1Minecraft;
+        tileImage = 1;
 
         try
         {
-            BufferedImage var2 = ImageIO.read(Minecraft.class.getResource("/gui/items.png"));
-            int var3 = this.iconIndex % 16 * 16;
-            int var4 = this.iconIndex / 16 * 16;
-            var2.getRGB(var3, var4, 16, 16, this.compassIconImageData, 0, 16);
+            BufferedImage bufferedimage = ImageIO.read((net.minecraft.client.Minecraft.class).getResource("/gui/items.png"));
+            int i = (iconIndex % 16) * 16;
+            int j = (iconIndex / 16) * 16;
+            bufferedimage.getRGB(i, j, 16, 16, compassIconImageData, 0, 16);
         }
-        catch (IOException var5)
+        catch (IOException ioexception)
         {
-            var5.printStackTrace();
+            ioexception.printStackTrace();
         }
     }
 
     public void onTick()
     {
-        for (int var1 = 0; var1 < 256; ++var1)
+        for (int i = 0; i < 256; i++)
         {
-            int var2 = this.compassIconImageData[var1] >> 24 & 255;
-            int var3 = this.compassIconImageData[var1] >> 16 & 255;
-            int var4 = this.compassIconImageData[var1] >> 8 & 255;
-            int var5 = this.compassIconImageData[var1] >> 0 & 255;
+            int j = compassIconImageData[i] >> 24 & 0xff;
+            int k = compassIconImageData[i] >> 16 & 0xff;
+            int l = compassIconImageData[i] >> 8 & 0xff;
+            int i1 = compassIconImageData[i] >> 0 & 0xff;
 
-            if (this.anaglyphEnabled)
+            if (anaglyphEnabled)
             {
-                int var6 = (var3 * 30 + var4 * 59 + var5 * 11) / 100;
-                int var7 = (var3 * 30 + var4 * 70) / 100;
-                int var8 = (var3 * 30 + var5 * 70) / 100;
-                var3 = var6;
-                var4 = var7;
-                var5 = var8;
+                int j1 = (k * 30 + l * 59 + i1 * 11) / 100;
+                int k1 = (k * 30 + l * 70) / 100;
+                int l1 = (k * 30 + i1 * 70) / 100;
+                k = j1;
+                l = k1;
+                i1 = l1;
             }
 
-            this.imageData[var1 * 4 + 0] = (byte)var3;
-            this.imageData[var1 * 4 + 1] = (byte)var4;
-            this.imageData[var1 * 4 + 2] = (byte)var5;
-            this.imageData[var1 * 4 + 3] = (byte)var2;
+            imageData[i * 4 + 0] = (byte)k;
+            imageData[i * 4 + 1] = (byte)l;
+            imageData[i * 4 + 2] = (byte)i1;
+            imageData[i * 4 + 3] = (byte)j;
         }
 
-        double var20 = 0.0D;
+        double d = 0.0D;
 
-        if (this.mc.theWorld != null && this.mc.thePlayer != null)
+        if (mc.theWorld != null && mc.thePlayer != null)
         {
-            ChunkCoordinates var21 = this.mc.theWorld.getSpawnPoint();
-            double var23 = (double)var21.posX - this.mc.thePlayer.posX;
-            double var25 = (double)var21.posZ - this.mc.thePlayer.posZ;
-            var20 = (double)(this.mc.thePlayer.rotationYaw - 90.0F) * Math.PI / 180.0D - Math.atan2(var25, var23);
+            ChunkCoordinates chunkcoordinates = mc.theWorld.getSpawnPoint();
+            double d2 = (double)chunkcoordinates.posX - mc.thePlayer.posX;
+            double d4 = (double)chunkcoordinates.posZ - mc.thePlayer.posZ;
+            d = ((double)(mc.thePlayer.rotationYaw - 90F) * Math.PI) / 180D - Math.atan2(d4, d2);
 
-            if (!this.mc.theWorld.provider.isSurfaceWorld())
+            if (!mc.theWorld.worldProvider.isSurfaceWorld())
             {
-                var20 = Math.random() * Math.PI * 2.0D;
+                d = Math.random() * Math.PI * 2D;
             }
         }
 
-        double var22;
+        double d1;
 
-        for (var22 = var20 - this.field_76868_i; var22 < -Math.PI; var22 += (Math.PI * 2D))
+        for (d1 = d - field_76868_i; d1 < -Math.PI; d1 += (Math.PI * 2D)) { }
+
+        for (; d1 >= Math.PI; d1 -= (Math.PI * 2D)) { }
+
+        if (d1 < -1D)
         {
-            ;
+            d1 = -1D;
         }
 
-        while (var22 >= Math.PI)
+        if (d1 > 1.0D)
         {
-            var22 -= (Math.PI * 2D);
+            d1 = 1.0D;
         }
 
-        if (var22 < -1.0D)
+        field_76866_j += d1 * 0.10000000000000001D;
+        field_76866_j *= 0.80000000000000004D;
+        field_76868_i += field_76866_j;
+        double d3 = Math.sin(field_76868_i);
+        double d5 = Math.cos(field_76868_i);
+
+        for (int i2 = -4; i2 <= 4; i2++)
         {
-            var22 = -1.0D;
-        }
+            int k2 = (int)(8.5D + d5 * (double)i2 * 0.29999999999999999D);
+            int i3 = (int)(7.5D - d3 * (double)i2 * 0.29999999999999999D * 0.5D);
+            int k3 = i3 * 16 + k2;
+            int i4 = 100;
+            int k4 = 100;
+            int i5 = 100;
+            char c = '\377';
 
-        if (var22 > 1.0D)
-        {
-            var22 = 1.0D;
-        }
-
-        this.field_76866_j += var22 * 0.1D;
-        this.field_76866_j *= 0.8D;
-        this.field_76868_i += this.field_76866_j;
-        double var24 = Math.sin(this.field_76868_i);
-        double var26 = Math.cos(this.field_76868_i);
-        int var9;
-        int var10;
-        int var11;
-        int var12;
-        int var13;
-        int var14;
-        int var15;
-        int var17;
-        short var16;
-        int var19;
-        int var18;
-
-        for (var9 = -4; var9 <= 4; ++var9)
-        {
-            var10 = (int)(8.5D + var26 * (double)var9 * 0.3D);
-            var11 = (int)(7.5D - var24 * (double)var9 * 0.3D * 0.5D);
-            var12 = var11 * 16 + var10;
-            var13 = 100;
-            var14 = 100;
-            var15 = 100;
-            var16 = 255;
-
-            if (this.anaglyphEnabled)
+            if (anaglyphEnabled)
             {
-                var17 = (var13 * 30 + var14 * 59 + var15 * 11) / 100;
-                var18 = (var13 * 30 + var14 * 70) / 100;
-                var19 = (var13 * 30 + var15 * 70) / 100;
-                var13 = var17;
-                var14 = var18;
-                var15 = var19;
+                int k5 = (i4 * 30 + k4 * 59 + i5 * 11) / 100;
+                int i6 = (i4 * 30 + k4 * 70) / 100;
+                int k6 = (i4 * 30 + i5 * 70) / 100;
+                i4 = k5;
+                k4 = i6;
+                i5 = k6;
             }
 
-            this.imageData[var12 * 4 + 0] = (byte)var13;
-            this.imageData[var12 * 4 + 1] = (byte)var14;
-            this.imageData[var12 * 4 + 2] = (byte)var15;
-            this.imageData[var12 * 4 + 3] = (byte)var16;
+            imageData[k3 * 4 + 0] = (byte)i4;
+            imageData[k3 * 4 + 1] = (byte)k4;
+            imageData[k3 * 4 + 2] = (byte)i5;
+            imageData[k3 * 4 + 3] = (byte)c;
         }
 
-        for (var9 = -8; var9 <= 16; ++var9)
+        for (int j2 = -8; j2 <= 16; j2++)
         {
-            var10 = (int)(8.5D + var24 * (double)var9 * 0.3D);
-            var11 = (int)(7.5D + var26 * (double)var9 * 0.3D * 0.5D);
-            var12 = var11 * 16 + var10;
-            var13 = var9 >= 0 ? 255 : 100;
-            var14 = var9 >= 0 ? 20 : 100;
-            var15 = var9 >= 0 ? 20 : 100;
-            var16 = 255;
+            int l2 = (int)(8.5D + d3 * (double)j2 * 0.29999999999999999D);
+            int j3 = (int)(7.5D + d5 * (double)j2 * 0.29999999999999999D * 0.5D);
+            int l3 = j3 * 16 + l2;
+            int j4 = j2 < 0 ? 100 : 255;
+            int l4 = j2 < 0 ? 100 : 20;
+            int j5 = j2 < 0 ? 100 : 20;
+            char c1 = '\377';
 
-            if (this.anaglyphEnabled)
+            if (anaglyphEnabled)
             {
-                var17 = (var13 * 30 + var14 * 59 + var15 * 11) / 100;
-                var18 = (var13 * 30 + var14 * 70) / 100;
-                var19 = (var13 * 30 + var15 * 70) / 100;
-                var13 = var17;
-                var14 = var18;
-                var15 = var19;
+                int l5 = (j4 * 30 + l4 * 59 + j5 * 11) / 100;
+                int j6 = (j4 * 30 + l4 * 70) / 100;
+                int l6 = (j4 * 30 + j5 * 70) / 100;
+                j4 = l5;
+                l4 = j6;
+                j5 = l6;
             }
 
-            this.imageData[var12 * 4 + 0] = (byte)var13;
-            this.imageData[var12 * 4 + 1] = (byte)var14;
-            this.imageData[var12 * 4 + 2] = (byte)var15;
-            this.imageData[var12 * 4 + 3] = (byte)var16;
+            imageData[l3 * 4 + 0] = (byte)j4;
+            imageData[l3 * 4 + 1] = (byte)l4;
+            imageData[l3 * 4 + 2] = (byte)j5;
+            imageData[l3 * 4 + 3] = (byte)c1;
         }
     }
 }

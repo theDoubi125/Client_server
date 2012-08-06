@@ -1,10 +1,5 @@
 package net.minecraft.src;
 
-import java.awt.Toolkit;
-import java.awt.datatransfer.ClipboardOwner;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,27 +20,33 @@ public class GuiScreen extends Gui
     public int height;
 
     /** A list of all the controls added to this container. */
-    protected List controlList = new ArrayList();
-    public boolean allowUserInput = false;
+    protected List controlList;
+    public boolean allowUserInput;
 
     /** The FontRenderer used by GuiScreen */
     protected FontRenderer fontRenderer;
     public GuiParticle guiParticles;
 
     /** The button that was just pressed. */
-    private GuiButton selectedButton = null;
+    private GuiButton selectedButton;
+
+    public GuiScreen()
+    {
+        controlList = new ArrayList();
+        allowUserInput = false;
+        selectedButton = null;
+    }
 
     /**
      * Draws the screen and all the components in it.
      */
     public void drawScreen(int par1, int par2, float par3)
     {
-        Iterator var4 = this.controlList.iterator();
+        GuiButton guibutton;
 
-        while (var4.hasNext())
+        for (Iterator iterator = controlList.iterator(); iterator.hasNext(); guibutton.drawButton(mc, par1, par2))
         {
-            GuiButton var5 = (GuiButton)var4.next();
-            var5.drawButton(this.mc, par1, par2);
+            guibutton = (GuiButton)iterator.next();
         }
     }
 
@@ -56,8 +57,8 @@ public class GuiScreen extends Gui
     {
         if (par2 == 1)
         {
-            this.mc.displayGuiScreen((GuiScreen)null);
-            this.mc.setIngameFocus();
+            mc.displayGuiScreen(null);
+            mc.setIngameFocus();
         }
     }
 
@@ -68,17 +69,14 @@ public class GuiScreen extends Gui
     {
         try
         {
-            Transferable var0 = Toolkit.getDefaultToolkit().getSystemClipboard().getContents((Object)null);
+            java.awt.datatransfer.Transferable transferable = java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
 
-            if (var0 != null && var0.isDataFlavorSupported(DataFlavor.stringFlavor))
+            if (transferable != null && transferable.isDataFlavorSupported(java.awt.datatransfer.DataFlavor.stringFlavor))
             {
-                return (String)var0.getTransferData(DataFlavor.stringFlavor);
+                return (String)transferable.getTransferData(java.awt.datatransfer.DataFlavor.stringFlavor);
             }
         }
-        catch (Exception var1)
-        {
-            ;
-        }
+        catch (Exception exception) { }
 
         return "";
     }
@@ -90,13 +88,10 @@ public class GuiScreen extends Gui
     {
         try
         {
-            StringSelection var1 = new StringSelection(par0Str);
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(var1, (ClipboardOwner)null);
+            java.awt.datatransfer.StringSelection stringselection = new java.awt.datatransfer.StringSelection(par0Str);
+            java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringselection, null);
         }
-        catch (Exception var2)
-        {
-            ;
-        }
+        catch (Exception exception) { }
     }
 
     /**
@@ -106,15 +101,15 @@ public class GuiScreen extends Gui
     {
         if (par3 == 0)
         {
-            for (int var4 = 0; var4 < this.controlList.size(); ++var4)
+            for (int i = 0; i < controlList.size(); i++)
             {
-                GuiButton var5 = (GuiButton)this.controlList.get(var4);
+                GuiButton guibutton = (GuiButton)controlList.get(i);
 
-                if (var5.mousePressed(this.mc, par1, par2))
+                if (guibutton.mousePressed(mc, par1, par2))
                 {
-                    this.selectedButton = var5;
-                    this.mc.sndManager.playSoundFX("random.click", 1.0F, 1.0F);
-                    this.actionPerformed(var5);
+                    selectedButton = guibutton;
+                    mc.sndManager.playSoundFX("random.click", 1.0F, 1.0F);
+                    actionPerformed(guibutton);
                 }
             }
         }
@@ -126,17 +121,19 @@ public class GuiScreen extends Gui
      */
     protected void mouseMovedOrUp(int par1, int par2, int par3)
     {
-        if (this.selectedButton != null && par3 == 0)
+        if (selectedButton != null && par3 == 0)
         {
-            this.selectedButton.mouseReleased(par1, par2);
-            this.selectedButton = null;
+            selectedButton.mouseReleased(par1, par2);
+            selectedButton = null;
         }
     }
 
     /**
      * Fired when a control is clicked. This is the equivalent of ActionListener.actionPerformed(ActionEvent e).
      */
-    protected void actionPerformed(GuiButton par1GuiButton) {}
+    protected void actionPerformed(GuiButton guibutton)
+    {
+    }
 
     /**
      * Causes the screen to lay out its subcomponents again. This is the equivalent of the Java call
@@ -144,34 +141,30 @@ public class GuiScreen extends Gui
      */
     public void setWorldAndResolution(Minecraft par1Minecraft, int par2, int par3)
     {
-        this.guiParticles = new GuiParticle(par1Minecraft);
-        this.mc = par1Minecraft;
-        this.fontRenderer = par1Minecraft.fontRenderer;
-        this.width = par2;
-        this.height = par3;
-        this.controlList.clear();
-        this.initGui();
+        guiParticles = new GuiParticle(par1Minecraft);
+        mc = par1Minecraft;
+        fontRenderer = par1Minecraft.fontRenderer;
+        width = par2;
+        height = par3;
+        controlList.clear();
+        initGui();
     }
 
     /**
      * Adds the buttons (and other controls) to the screen in question.
      */
-    public void initGui() {}
+    public void initGui()
+    {
+    }
 
     /**
      * Delegates mouse and keyboard input.
      */
     public void handleInput()
     {
-        while (Mouse.next())
-        {
-            this.handleMouseInput();
-        }
+        for (; Mouse.next(); handleMouseInput()) { }
 
-        while (Keyboard.next())
-        {
-            this.handleKeyboardInput();
-        }
+        for (; Keyboard.next(); handleKeyboardInput()) { }
     }
 
     /**
@@ -179,20 +172,17 @@ public class GuiScreen extends Gui
      */
     public void handleMouseInput()
     {
-        int var1;
-        int var2;
-
         if (Mouse.getEventButtonState())
         {
-            var1 = Mouse.getEventX() * this.width / this.mc.displayWidth;
-            var2 = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-            this.mouseClicked(var1, var2, Mouse.getEventButton());
+            int i = (Mouse.getEventX() * width) / mc.displayWidth;
+            int k = height - (Mouse.getEventY() * height) / mc.displayHeight - 1;
+            mouseClicked(i, k, Mouse.getEventButton());
         }
         else
         {
-            var1 = Mouse.getEventX() * this.width / this.mc.displayWidth;
-            var2 = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
-            this.mouseMovedOrUp(var1, var2, Mouse.getEventButton());
+            int j = (Mouse.getEventX() * width) / mc.displayWidth;
+            int l = height - (Mouse.getEventY() * height) / mc.displayHeight - 1;
+            mouseMovedOrUp(j, l, Mouse.getEventButton());
         }
     }
 
@@ -205,41 +195,45 @@ public class GuiScreen extends Gui
         {
             if (Keyboard.getEventKey() == 87)
             {
-                this.mc.toggleFullscreen();
+                mc.toggleFullscreen();
                 return;
             }
 
-            this.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
+            keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
         }
     }
 
     /**
      * Called from the main game loop to update the screen.
      */
-    public void updateScreen() {}
+    public void updateScreen()
+    {
+    }
 
     /**
      * Called when the screen is unloaded. Used to disable keyboard repeat events
      */
-    public void onGuiClosed() {}
+    public void onGuiClosed()
+    {
+    }
 
     /**
      * Draws either a gradient over the background screen (when it exists) or a flat gradient over background.png
      */
     public void drawDefaultBackground()
     {
-        this.drawWorldBackground(0);
+        drawWorldBackground(0);
     }
 
     public void drawWorldBackground(int par1)
     {
-        if (this.mc.theWorld != null)
+        if (mc.theWorld != null)
         {
-            this.drawGradientRect(0, 0, this.width, this.height, -1072689136, -804253680);
+            drawGradientRect(0, 0, width, height, 0xc0101010, 0xd0101010);
         }
         else
         {
-            this.drawBackground(par1);
+            drawBackground(par1);
         }
     }
 
@@ -250,17 +244,17 @@ public class GuiScreen extends Gui
     {
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_FOG);
-        Tessellator var2 = Tessellator.instance;
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/gui/background.png"));
+        Tessellator tessellator = Tessellator.instance;
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture("/gui/background.png"));
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-        float var3 = 32.0F;
-        var2.startDrawingQuads();
-        var2.setColorOpaque_I(4210752);
-        var2.addVertexWithUV(0.0D, (double)this.height, 0.0D, 0.0D, (double)((float)this.height / var3 + (float)par1));
-        var2.addVertexWithUV((double)this.width, (double)this.height, 0.0D, (double)((float)this.width / var3), (double)((float)this.height / var3 + (float)par1));
-        var2.addVertexWithUV((double)this.width, 0.0D, 0.0D, (double)((float)this.width / var3), (double)par1);
-        var2.addVertexWithUV(0.0D, 0.0D, 0.0D, 0.0D, (double)par1);
-        var2.draw();
+        float f = 32F;
+        tessellator.startDrawingQuads();
+        tessellator.setColorOpaque_I(0x404040);
+        tessellator.addVertexWithUV(0.0D, height, 0.0D, 0.0D, (float)height / f + (float)par1);
+        tessellator.addVertexWithUV(width, height, 0.0D, (float)width / f, (float)height / f + (float)par1);
+        tessellator.addVertexWithUV(width, 0.0D, 0.0D, (float)width / f, par1);
+        tessellator.addVertexWithUV(0.0D, 0.0D, 0.0D, 0.0D, par1);
+        tessellator.draw();
     }
 
     /**
@@ -271,7 +265,9 @@ public class GuiScreen extends Gui
         return true;
     }
 
-    public void confirmClicked(boolean par1, int par2) {}
+    public void confirmClicked(boolean flag, int i)
+    {
+    }
 
     public static boolean isCtrlKeyDown()
     {

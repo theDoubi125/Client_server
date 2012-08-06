@@ -1,25 +1,33 @@
 package net.minecraft.src;
 
+import java.util.List;
+import java.util.Random;
+
 public class EntityGhast extends EntityFlying implements IMob
 {
-    public int courseChangeCooldown = 0;
+    public int courseChangeCooldown;
     public double waypointX;
     public double waypointY;
     public double waypointZ;
-    private Entity targetedEntity = null;
+    private Entity targetedEntity;
 
     /** Cooldown time between target loss and new target aquirement. */
-    private int aggroCooldown = 0;
-    public int prevAttackCounter = 0;
-    public int attackCounter = 0;
+    private int aggroCooldown;
+    public int prevAttackCounter;
+    public int attackCounter;
 
     public EntityGhast(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/ghast.png";
-        this.setSize(4.0F, 4.0F);
-        this.isImmuneToFire = true;
-        this.experienceValue = 5;
+        courseChangeCooldown = 0;
+        targetedEntity = null;
+        aggroCooldown = 0;
+        prevAttackCounter = 0;
+        attackCounter = 0;
+        texture = "/mob/ghast.png";
+        setSize(4F, 4F);
+        isImmuneToFire = true;
+        experienceValue = 5;
     }
 
     /**
@@ -27,7 +35,7 @@ public class EntityGhast extends EntityFlying implements IMob
      */
     public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
     {
-        if ("fireball".equals(par1DamageSource.getDamageType()) && par1DamageSource.getEntity() instanceof EntityPlayer)
+        if ("fireball".equals(par1DamageSource.getDamageType()) && (par1DamageSource.getEntity() instanceof EntityPlayer))
         {
             super.attackEntityFrom(par1DamageSource, 1000);
             ((EntityPlayer)par1DamageSource.getEntity()).triggerAchievement(AchievementList.ghast);
@@ -42,7 +50,7 @@ public class EntityGhast extends EntityFlying implements IMob
     protected void entityInit()
     {
         super.entityInit();
-        this.dataWatcher.addObject(16, Byte.valueOf((byte)0));
+        dataWatcher.addObject(16, Byte.valueOf((byte)0));
     }
 
     public int getMaxHealth()
@@ -56,119 +64,119 @@ public class EntityGhast extends EntityFlying implements IMob
     public void onUpdate()
     {
         super.onUpdate();
-        byte var1 = this.dataWatcher.getWatchableObjectByte(16);
-        this.texture = var1 == 1 ? "/mob/ghast_fire.png" : "/mob/ghast.png";
+        byte byte0 = dataWatcher.getWatchableObjectByte(16);
+        texture = byte0 != 1 ? "/mob/ghast.png" : "/mob/ghast_fire.png";
     }
 
     protected void updateEntityActionState()
     {
-        if (!this.worldObj.isRemote && this.worldObj.difficultySetting == 0)
+        if (!worldObj.isRemote && worldObj.difficultySetting == 0)
         {
-            this.setDead();
+            setDead();
         }
 
-        this.despawnEntity();
-        this.prevAttackCounter = this.attackCounter;
-        double var1 = this.waypointX - this.posX;
-        double var3 = this.waypointY - this.posY;
-        double var5 = this.waypointZ - this.posZ;
-        double var7 = var1 * var1 + var3 * var3 + var5 * var5;
+        despawnEntity();
+        prevAttackCounter = attackCounter;
+        double d = waypointX - posX;
+        double d1 = waypointY - posY;
+        double d2 = waypointZ - posZ;
+        double d3 = d * d + d1 * d1 + d2 * d2;
 
-        if (var7 < 1.0D || var7 > 3600.0D)
+        if (d3 < 1.0D || d3 > 3600D)
         {
-            this.waypointX = this.posX + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
-            this.waypointY = this.posY + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
-            this.waypointZ = this.posZ + (double)((this.rand.nextFloat() * 2.0F - 1.0F) * 16.0F);
+            waypointX = posX + (double)((rand.nextFloat() * 2.0F - 1.0F) * 16F);
+            waypointY = posY + (double)((rand.nextFloat() * 2.0F - 1.0F) * 16F);
+            waypointZ = posZ + (double)((rand.nextFloat() * 2.0F - 1.0F) * 16F);
         }
 
-        if (this.courseChangeCooldown-- <= 0)
+        if (courseChangeCooldown-- <= 0)
         {
-            this.courseChangeCooldown += this.rand.nextInt(5) + 2;
-            var7 = (double)MathHelper.sqrt_double(var7);
+            courseChangeCooldown += rand.nextInt(5) + 2;
+            d3 = MathHelper.sqrt_double(d3);
 
-            if (this.isCourseTraversable(this.waypointX, this.waypointY, this.waypointZ, var7))
+            if (isCourseTraversable(waypointX, waypointY, waypointZ, d3))
             {
-                this.motionX += var1 / var7 * 0.1D;
-                this.motionY += var3 / var7 * 0.1D;
-                this.motionZ += var5 / var7 * 0.1D;
+                motionX += (d / d3) * 0.10000000000000001D;
+                motionY += (d1 / d3) * 0.10000000000000001D;
+                motionZ += (d2 / d3) * 0.10000000000000001D;
             }
             else
             {
-                this.waypointX = this.posX;
-                this.waypointY = this.posY;
-                this.waypointZ = this.posZ;
+                waypointX = posX;
+                waypointY = posY;
+                waypointZ = posZ;
             }
         }
 
-        if (this.targetedEntity != null && this.targetedEntity.isDead)
+        if (targetedEntity != null && targetedEntity.isDead)
         {
-            this.targetedEntity = null;
+            targetedEntity = null;
         }
 
-        if (this.targetedEntity == null || this.aggroCooldown-- <= 0)
+        if (targetedEntity == null || aggroCooldown-- <= 0)
         {
-            this.targetedEntity = this.worldObj.getClosestVulnerablePlayerToEntity(this, 100.0D);
+            targetedEntity = worldObj.getClosestVulnerablePlayerToEntity(this, 100D);
 
-            if (this.targetedEntity != null)
+            if (targetedEntity != null)
             {
-                this.aggroCooldown = 20;
+                aggroCooldown = 20;
             }
         }
 
-        double var9 = 64.0D;
+        double d4 = 64D;
 
-        if (this.targetedEntity != null && this.targetedEntity.getDistanceSqToEntity(this) < var9 * var9)
+        if (targetedEntity != null && targetedEntity.getDistanceSqToEntity(this) < d4 * d4)
         {
-            double var11 = this.targetedEntity.posX - this.posX;
-            double var13 = this.targetedEntity.boundingBox.minY + (double)(this.targetedEntity.height / 2.0F) - (this.posY + (double)(this.height / 2.0F));
-            double var15 = this.targetedEntity.posZ - this.posZ;
-            this.renderYawOffset = this.rotationYaw = -((float)Math.atan2(var11, var15)) * 180.0F / (float)Math.PI;
+            double d5 = targetedEntity.posX - posX;
+            double d6 = (targetedEntity.boundingBox.minY + (double)(targetedEntity.height / 2.0F)) - (posY + (double)(height / 2.0F));
+            double d7 = targetedEntity.posZ - posZ;
+            renderYawOffset = rotationYaw = (-(float)Math.atan2(d5, d7) * 180F) / (float)Math.PI;
 
-            if (this.canEntityBeSeen(this.targetedEntity))
+            if (canEntityBeSeen(targetedEntity))
             {
-                if (this.attackCounter == 10)
+                if (attackCounter == 10)
                 {
-                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1007, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
+                    worldObj.playAuxSFXAtEntity(null, 1007, (int)posX, (int)posY, (int)posZ, 0);
                 }
 
-                ++this.attackCounter;
+                attackCounter++;
 
-                if (this.attackCounter == 20)
+                if (attackCounter == 20)
                 {
-                    this.worldObj.playAuxSFXAtEntity((EntityPlayer)null, 1008, (int)this.posX, (int)this.posY, (int)this.posZ, 0);
-                    EntityFireball var17 = new EntityFireball(this.worldObj, this, var11, var13, var15);
-                    double var18 = 4.0D;
-                    Vec3 var20 = this.getLook(1.0F);
-                    var17.posX = this.posX + var20.xCoord * var18;
-                    var17.posY = this.posY + (double)(this.height / 2.0F) + 0.5D;
-                    var17.posZ = this.posZ + var20.zCoord * var18;
-                    this.worldObj.spawnEntityInWorld(var17);
-                    this.attackCounter = -40;
+                    worldObj.playAuxSFXAtEntity(null, 1008, (int)posX, (int)posY, (int)posZ, 0);
+                    EntityFireball entityfireball = new EntityFireball(worldObj, this, d5, d6, d7);
+                    double d8 = 4D;
+                    Vec3 vec3 = getLook(1.0F);
+                    entityfireball.posX = posX + vec3.xCoord * d8;
+                    entityfireball.posY = posY + (double)(height / 2.0F) + 0.5D;
+                    entityfireball.posZ = posZ + vec3.zCoord * d8;
+                    worldObj.spawnEntityInWorld(entityfireball);
+                    attackCounter = -40;
                 }
             }
-            else if (this.attackCounter > 0)
+            else if (attackCounter > 0)
             {
-                --this.attackCounter;
+                attackCounter--;
             }
         }
         else
         {
-            this.renderYawOffset = this.rotationYaw = -((float)Math.atan2(this.motionX, this.motionZ)) * 180.0F / (float)Math.PI;
+            renderYawOffset = rotationYaw = (-(float)Math.atan2(motionX, motionZ) * 180F) / (float)Math.PI;
 
-            if (this.attackCounter > 0)
+            if (attackCounter > 0)
             {
-                --this.attackCounter;
+                attackCounter--;
             }
         }
 
-        if (!this.worldObj.isRemote)
+        if (!worldObj.isRemote)
         {
-            byte var21 = this.dataWatcher.getWatchableObjectByte(16);
-            byte var12 = (byte)(this.attackCounter > 10 ? 1 : 0);
+            byte byte0 = dataWatcher.getWatchableObjectByte(16);
+            byte byte1 = (byte)(attackCounter <= 10 ? 0 : 1);
 
-            if (var21 != var12)
+            if (byte0 != byte1)
             {
-                this.dataWatcher.updateObject(16, Byte.valueOf(var12));
+                dataWatcher.updateObject(16, Byte.valueOf(byte1));
             }
         }
     }
@@ -178,16 +186,16 @@ public class EntityGhast extends EntityFlying implements IMob
      */
     private boolean isCourseTraversable(double par1, double par3, double par5, double par7)
     {
-        double var9 = (this.waypointX - this.posX) / par7;
-        double var11 = (this.waypointY - this.posY) / par7;
-        double var13 = (this.waypointZ - this.posZ) / par7;
-        AxisAlignedBB var15 = this.boundingBox.copy();
+        double d = (waypointX - posX) / par7;
+        double d1 = (waypointY - posY) / par7;
+        double d2 = (waypointZ - posZ) / par7;
+        AxisAlignedBB axisalignedbb = boundingBox.copy();
 
-        for (int var16 = 1; (double)var16 < par7; ++var16)
+        for (int i = 1; (double)i < par7; i++)
         {
-            var15.offset(var9, var11, var13);
+            axisalignedbb.offset(d, d1, d2);
 
-            if (!this.worldObj.getCollidingBoundingBoxes(this, var15).isEmpty())
+            if (!worldObj.getCollidingBoundingBoxes(this, axisalignedbb).isEmpty())
             {
                 return false;
             }
@@ -233,19 +241,18 @@ public class EntityGhast extends EntityFlying implements IMob
      */
     protected void dropFewItems(boolean par1, int par2)
     {
-        int var3 = this.rand.nextInt(2) + this.rand.nextInt(1 + par2);
-        int var4;
+        int i = rand.nextInt(2) + rand.nextInt(1 + par2);
 
-        for (var4 = 0; var4 < var3; ++var4)
+        for (int j = 0; j < i; j++)
         {
-            this.dropItem(Item.ghastTear.shiftedIndex, 1);
+            dropItem(Item.ghastTear.shiftedIndex, 1);
         }
 
-        var3 = this.rand.nextInt(3) + this.rand.nextInt(1 + par2);
+        i = rand.nextInt(3) + rand.nextInt(1 + par2);
 
-        for (var4 = 0; var4 < var3; ++var4)
+        for (int k = 0; k < i; k++)
         {
-            this.dropItem(Item.gunpowder.shiftedIndex, 1);
+            dropItem(Item.gunpowder.shiftedIndex, 1);
         }
     }
 
@@ -254,7 +261,7 @@ public class EntityGhast extends EntityFlying implements IMob
      */
     protected float getSoundVolume()
     {
-        return 10.0F;
+        return 10F;
     }
 
     /**
@@ -262,7 +269,7 @@ public class EntityGhast extends EntityFlying implements IMob
      */
     public boolean getCanSpawnHere()
     {
-        return this.rand.nextInt(20) == 0 && super.getCanSpawnHere() && this.worldObj.difficultySetting > 0;
+        return rand.nextInt(20) == 0 && super.getCanSpawnHere() && worldObj.difficultySetting > 0;
     }
 
     /**
@@ -271,5 +278,11 @@ public class EntityGhast extends EntityFlying implements IMob
     public int getMaxSpawnedInChunk()
     {
         return 1;
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Ghast";
     }
 }

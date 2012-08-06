@@ -1,14 +1,17 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public abstract class EntityMob extends EntityCreature implements IMob
 {
     /** How much damage this mob's attacks deal */
-    protected int attackStrength = 2;
+    protected int attackStrength;
 
     public EntityMob(World par1World)
     {
         super(par1World);
-        this.experienceValue = 5;
+        attackStrength = 2;
+        experienceValue = 5;
     }
 
     /**
@@ -17,11 +20,11 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     public void onLivingUpdate()
     {
-        float var1 = this.getBrightness(1.0F);
+        float f = getBrightness(1.0F);
 
-        if (var1 > 0.5F)
+        if (f > 0.5F)
         {
-            this.entityAge += 2;
+            entityAge += 2;
         }
 
         super.onLivingUpdate();
@@ -34,9 +37,9 @@ public abstract class EntityMob extends EntityCreature implements IMob
     {
         super.onUpdate();
 
-        if (!this.worldObj.isRemote && this.worldObj.difficultySetting == 0)
+        if (!worldObj.isRemote && worldObj.difficultySetting == 0)
         {
-            this.setDead();
+            setDead();
         }
     }
 
@@ -46,8 +49,16 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     protected Entity findPlayerToAttack()
     {
-        EntityPlayer var1 = this.worldObj.getClosestVulnerablePlayerToEntity(this, 16.0D);
-        return var1 != null && this.canEntityBeSeen(var1) ? var1 : null;
+        EntityPlayer entityplayer = worldObj.getClosestVulnerablePlayerToEntity(this, 16D);
+
+        if (entityplayer != null && canEntityBeSeen(entityplayer))
+        {
+            return entityplayer;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /**
@@ -57,21 +68,19 @@ public abstract class EntityMob extends EntityCreature implements IMob
     {
         if (super.attackEntityFrom(par1DamageSource, par2))
         {
-            Entity var3 = par1DamageSource.getEntity();
+            Entity entity = par1DamageSource.getEntity();
 
-            if (this.riddenByEntity != var3 && this.ridingEntity != var3)
-            {
-                if (var3 != this)
-                {
-                    this.entityToAttack = var3;
-                }
-
-                return true;
-            }
-            else
+            if (riddenByEntity == entity || ridingEntity == entity)
             {
                 return true;
             }
+
+            if (entity != this)
+            {
+                entityToAttack = entity;
+            }
+
+            return true;
         }
         else
         {
@@ -81,19 +90,19 @@ public abstract class EntityMob extends EntityCreature implements IMob
 
     public boolean attackEntityAsMob(Entity par1Entity)
     {
-        int var2 = this.attackStrength;
+        int i = attackStrength;
 
-        if (this.isPotionActive(Potion.damageBoost))
+        if (isPotionActive(Potion.damageBoost))
         {
-            var2 += 3 << this.getActivePotionEffect(Potion.damageBoost).getAmplifier();
+            i += 3 << getActivePotionEffect(Potion.damageBoost).getAmplifier();
         }
 
-        if (this.isPotionActive(Potion.weakness))
+        if (isPotionActive(Potion.weakness))
         {
-            var2 -= 2 << this.getActivePotionEffect(Potion.weakness).getAmplifier();
+            i -= 2 << getActivePotionEffect(Potion.weakness).getAmplifier();
         }
 
-        return par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), var2);
+        return par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), i);
     }
 
     /**
@@ -101,10 +110,10 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     protected void attackEntity(Entity par1Entity, float par2)
     {
-        if (this.attackTime <= 0 && par2 < 2.0F && par1Entity.boundingBox.maxY > this.boundingBox.minY && par1Entity.boundingBox.minY < this.boundingBox.maxY)
+        if (attackTime <= 0 && par2 < 2.0F && par1Entity.boundingBox.maxY > boundingBox.minY && par1Entity.boundingBox.minY < boundingBox.maxY)
         {
-            this.attackTime = 20;
-            this.attackEntityAsMob(par1Entity);
+            attackTime = 20;
+            attackEntityAsMob(par1Entity);
         }
     }
 
@@ -114,7 +123,7 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     public float getBlockPathWeight(int par1, int par2, int par3)
     {
-        return 0.5F - this.worldObj.getLightBrightness(par1, par2, par3);
+        return 0.5F - worldObj.getLightBrightness(par1, par2, par3);
     }
 
     /**
@@ -122,28 +131,26 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     protected boolean isValidLightLevel()
     {
-        int var1 = MathHelper.floor_double(this.posX);
-        int var2 = MathHelper.floor_double(this.boundingBox.minY);
-        int var3 = MathHelper.floor_double(this.posZ);
+        int i = MathHelper.floor_double(posX);
+        int j = MathHelper.floor_double(boundingBox.minY);
+        int k = MathHelper.floor_double(posZ);
 
-        if (this.worldObj.getSavedLightValue(EnumSkyBlock.Sky, var1, var2, var3) > this.rand.nextInt(32))
+        if (worldObj.getSavedLightValue(EnumSkyBlock.Sky, i, j, k) > rand.nextInt(32))
         {
             return false;
         }
-        else
+
+        int l = worldObj.getBlockLightValue(i, j, k);
+
+        if (worldObj.isThundering())
         {
-            int var4 = this.worldObj.getBlockLightValue(var1, var2, var3);
-
-            if (this.worldObj.isThundering())
-            {
-                int var5 = this.worldObj.skylightSubtracted;
-                this.worldObj.skylightSubtracted = 10;
-                var4 = this.worldObj.getBlockLightValue(var1, var2, var3);
-                this.worldObj.skylightSubtracted = var5;
-            }
-
-            return var4 <= this.rand.nextInt(8);
+            int i1 = worldObj.skylightSubtracted;
+            worldObj.skylightSubtracted = 10;
+            l = worldObj.getBlockLightValue(i, j, k);
+            worldObj.skylightSubtracted = i1;
         }
+
+        return l <= rand.nextInt(8);
     }
 
     /**
@@ -151,6 +158,11 @@ public abstract class EntityMob extends EntityCreature implements IMob
      */
     public boolean getCanSpawnHere()
     {
-        return this.isValidLightLevel() && super.getCanSpawnHere();
+        return isValidLightLevel() && super.getCanSpawnHere();
+    }
+    
+    public String getBreed()
+    {
+    	return "Mob";
     }
 }

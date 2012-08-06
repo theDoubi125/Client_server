@@ -5,45 +5,50 @@ import net.minecraft.server.MinecraftServer;
 
 public class CommandServerBan extends CommandBase
 {
-    public String getCommandName()
+    public CommandServerBan()
+    {
+    }
+
+    public String func_71517_b()
     {
         return "ban";
     }
 
-    public String getCommandUsage(ICommandSender par1ICommandSender)
+    public String func_71518_a(ICommandSender par1ICommandSender)
     {
-        return par1ICommandSender.translateString("commands.ban.usage", new Object[0]);
+        return par1ICommandSender.func_70004_a("commands.ban.usage", new Object[0]);
     }
 
-    /**
-     * Returns true if the given command sender is allowed to use this command.
-     */
-    public boolean canCommandSenderUseCommand(ICommandSender par1ICommandSender)
+    public boolean func_71519_b(ICommandSender par1ICommandSender)
     {
-        return MinecraftServer.getServer().getConfigurationManager().getBannedPlayers().isListActive() && super.canCommandSenderUseCommand(par1ICommandSender);
+        return MinecraftServer.func_71276_C().func_71203_ab().func_72390_e().func_73710_b() && super.func_71519_b(par1ICommandSender);
     }
 
-    public void processCommand(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public void func_71515_b(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
         if (par2ArrayOfStr.length >= 1 && par2ArrayOfStr[0].length() > 0)
         {
-            EntityPlayerMP var3 = MinecraftServer.getServer().getConfigurationManager().getPlayerForUsername(par2ArrayOfStr[0]);
-            BanEntry var4 = new BanEntry(par2ArrayOfStr[0]);
-            var4.setBannedBy(par1ICommandSender.getCommandSenderName());
+            EntityPlayerMP entityplayermp = MinecraftServer.func_71276_C().func_71203_ab().func_72361_f(par2ArrayOfStr[0]);
+            BanEntry banentry = new BanEntry(par2ArrayOfStr[0]);
+            banentry.func_73687_a(par1ICommandSender.func_70005_c_());
 
             if (par2ArrayOfStr.length >= 2)
             {
-                var4.setBanReason(joinString(par2ArrayOfStr, 1));
+                banentry.func_73689_b(func_71520_a(par2ArrayOfStr, 1));
             }
 
-            MinecraftServer.getServer().getConfigurationManager().getBannedPlayers().put(var4);
+            MinecraftServer.func_71276_C().func_71203_ab().func_72390_e().func_73706_a(banentry);
 
-            if (var3 != null)
+            if (entityplayermp != null)
             {
-                var3.serverForThisPlayer.kickPlayerFromServer("You are banned from this server.");
+                entityplayermp.netHandler.func_72565_c("You are banned from this server.");
             }
 
-            notifyAdmins(par1ICommandSender, "commands.ban.success", new Object[] {par2ArrayOfStr[0]});
+            func_71522_a(par1ICommandSender, "commands.ban.success", new Object[]
+                    {
+                        par2ArrayOfStr[0]
+                    });
+            return;
         }
         else
         {
@@ -51,11 +56,15 @@ public class CommandServerBan extends CommandBase
         }
     }
 
-    /**
-     * Adds the strings available in this command to the given list of tab completion options.
-     */
-    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] par2ArrayOfStr)
+    public List func_71516_a(ICommandSender par1ICommandSender, String par2ArrayOfStr[])
     {
-        return par2ArrayOfStr.length >= 1 ? getListOfStringsMatchingLastWord(par2ArrayOfStr, MinecraftServer.getServer().getAllUsernames()) : null;
+        if (par2ArrayOfStr.length >= 1)
+        {
+            return func_71530_a(par2ArrayOfStr, MinecraftServer.func_71276_C().func_71213_z());
+        }
+        else
+        {
+            return null;
+        }
     }
 }

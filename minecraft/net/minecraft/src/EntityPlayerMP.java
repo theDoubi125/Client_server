@@ -1,94 +1,70 @@
 package net.minecraft.src;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 import net.minecraft.server.MinecraftServer;
 
 public class EntityPlayerMP extends EntityPlayer implements ICrafting
 {
-    private StringTranslate translator = new StringTranslate("en_US");
-
-    /** set by the NetServerHandler or the ServerConfigurationManager */
-    public NetServerHandler serverForThisPlayer;
-    public MinecraftServer minecraftInstance;
-
-    /** The ItemInWorldManager belonging to this player */
-    public ItemInWorldManager theItemInWorldManager;
+    private StringTranslate field_71148_cg;
+    public NetServerHandler netHandler;
+    public MinecraftServer field_71133_b;
+    public ItemInWorldManager field_71134_c;
     public double field_71131_d;
     public double field_71132_e;
-    public final List chunksToLoad = new LinkedList();
-
-    /** entities added to this list will  be packet29'd to the player */
-    public final List destroyedItemsNetCache = new LinkedList();
-
-    /** set to getHealth */
-    private int lastHealth = -99999999;
-
-    /** set to foodStats.GetFoodLevel */
-    private int lastFoodLevel = -99999999;
-
-    /** set to foodStats.getSaturationLevel() == 0.0F each tick */
-    private boolean wasHungry = true;
-
-    /** Amount of experience the client was last set to */
-    private int lastExperience = -99999999;
-
-    /** de-increments onUpdate, attackEntityFrom is ignored if this >0 */
-    private int initialInvulnerability = 60;
-
-    /** must be between 3>x>15 (strictly between) */
-    private int renderDistance = 0;
-    private int chatVisibility = 0;
-    private boolean chatColours = true;
-
-    /**
-     * 0 is the held item, 1-4 is armor ; used to detect changes in getCurrentItemOrArmor
-     */
-    private ItemStack[] lastActiveItems = new ItemStack[] {null, null, null, null, null};
-
-    /**
-     * The currently in use window ID. Incremented every time a window is opened.
-     */
-    private int currentWindowId = 0;
-
-    /**
-     * poor mans concurency flag, lets hope the jvm doesn't re-order the setting of this flag wrt the inventory change
-     * on the next line
-     */
-    public boolean playerInventoryBeingManipulated;
+    public final List field_71129_f = new LinkedList();
+    public final List field_71130_g = new LinkedList();
+    private int field_71149_ch;
+    private int field_71146_ci;
+    private boolean field_71147_cj;
+    private int field_71144_ck;
+    private int field_71145_cl;
+    private int field_71142_cm;
+    private int field_71143_cn;
+    private boolean field_71140_co;
+    private ItemStack field_71141_cp[] =
+    {
+        null, null, null, null, null
+    };
+    private int field_71139_cq;
+    public boolean field_71137_h;
     public int field_71138_i;
-
-    /** set to true when the player is leaving the End after success. */
-    public boolean playerHasConqueredTheEnd = false;
+    public boolean field_71136_j;
 
     public EntityPlayerMP(MinecraftServer par1MinecraftServer, World par2World, String par3Str, ItemInWorldManager par4ItemInWorldManager)
     {
         super(par2World);
+        field_71148_cg = new StringTranslate("en_US");
+        field_71149_ch = 0xfa0a1f01;
+        field_71146_ci = 0xfa0a1f01;
+        field_71147_cj = true;
+        field_71144_ck = 0xfa0a1f01;
+        field_71145_cl = 60;
+        field_71142_cm = 0;
+        field_71143_cn = 0;
+        field_71140_co = true;
+        field_71139_cq = 0;
+        field_71136_j = false;
         par4ItemInWorldManager.field_73090_b = this;
-        this.theItemInWorldManager = par4ItemInWorldManager;
-        this.renderDistance = par1MinecraftServer.getConfigurationManager().getViewDistance();
-        ChunkCoordinates var5 = par2World.getSpawnPoint();
-        int var6 = var5.posX;
-        int var7 = var5.posZ;
-        int var8 = var5.posY;
+        field_71134_c = par4ItemInWorldManager;
+        field_71142_cm = par1MinecraftServer.func_71203_ab().func_72395_o();
+        ChunkCoordinates chunkcoordinates = par2World.getSpawnPoint();
+        int i = chunkcoordinates.posX;
+        int j = chunkcoordinates.posZ;
+        int k = chunkcoordinates.posY;
 
-        if (!par2World.provider.hasNoSky && par2World.getWorldInfo().getGameType() != EnumGameType.ADVENTURE)
+        if (!par2World.worldProvider.hasNoSky && par2World.getWorldInfo().func_76077_q() != EnumGameType.ADVENTURE)
         {
-            var6 += this.rand.nextInt(20) - 10;
-            var8 = par2World.getTopSolidOrLiquidBlock(var6, var7);
-            var7 += this.rand.nextInt(20) - 10;
+            i += rand.nextInt(20) - 10;
+            k = par2World.getTopSolidOrLiquidBlock(i, j);
+            j += rand.nextInt(20) - 10;
         }
 
-        this.setLocationAndAngles((double)var6 + 0.5D, (double)var8, (double)var7 + 0.5D, 0.0F, 0.0F);
-        this.minecraftInstance = par1MinecraftServer;
-        this.stepHeight = 0.0F;
-        this.username = par3Str;
-        this.yOffset = 0.0F;
+        setLocationAndAngles((double)i + 0.5D, k, (double)j + 0.5D, 0.0F, 0.0F);
+        field_71133_b = par1MinecraftServer;
+        stepHeight = 0.0F;
+        username = par3Str;
+        yOffset = 0.0F;
     }
 
     /**
@@ -100,7 +76,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
 
         if (par1NBTTagCompound.hasKey("playerGameType"))
         {
-            this.theItemInWorldManager.setGameType(EnumGameType.getByID(par1NBTTagCompound.getInteger("playerGameType")));
+            field_71134_c.func_73076_a(EnumGameType.func_77146_a(par1NBTTagCompound.getInteger("playerGameType")));
         }
     }
 
@@ -110,7 +86,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
     public void writeEntityToNBT(NBTTagCompound par1NBTTagCompound)
     {
         super.writeEntityToNBT(par1NBTTagCompound);
-        par1NBTTagCompound.setInteger("playerGameType", this.theItemInWorldManager.getGameType().getID());
+        par1NBTTagCompound.setInteger("playerGameType", field_71134_c.func_73081_b().func_77148_a());
     }
 
     /**
@@ -119,17 +95,17 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
     public void removeExperience(int par1)
     {
         super.removeExperience(par1);
-        this.lastExperience = -1;
+        field_71144_ck = -1;
     }
 
-    public void addSelfToInternalCraftingInventory()
+    public void func_71116_b()
     {
-        this.craftingInventory.addCraftingToCrafters(this);
+        craftingInventory.func_75132_a(this);
     }
 
-    public ItemStack[] getLastActiveItems()
+    public ItemStack[] func_70035_c()
     {
-        return this.lastActiveItems;
+        return field_71141_cp;
     }
 
     /**
@@ -137,7 +113,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     protected void resetHeight()
     {
-        this.yOffset = 0.0F;
+        yOffset = 0.0F;
     }
 
     public float getEyeHeight()
@@ -150,172 +126,179 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void onUpdate()
     {
-        this.theItemInWorldManager.func_73075_a();
-        --this.initialInvulnerability;
-        this.craftingInventory.updateCraftingResults();
-        int var1;
+        field_71134_c.func_73075_a();
+        field_71145_cl--;
+        craftingInventory.updateCraftingResults();
 
-        for (var1 = 0; var1 < 5; ++var1)
+        for (int i = 0; i < 5; i++)
         {
-            ItemStack var2 = this.getCurrentItemOrArmor(var1);
+            ItemStack itemstack = func_71124_b(i);
 
-            if (var2 != this.lastActiveItems[var1])
+            if (itemstack != field_71141_cp[i])
             {
-                this.getServerForPlayer().getEntityTracker().sendPacketToAllPlayersTrackingEntity(this, new Packet5PlayerInventory(this.entityId, var1, var2));
-                this.lastActiveItems[var1] = var2;
+                func_71121_q().func_73039_n().func_72784_a(this, new Packet5PlayerInventory(entityId, i, itemstack));
+                field_71141_cp[i] = itemstack;
             }
         }
 
-        if (!this.chunksToLoad.isEmpty())
+        if (!field_71129_f.isEmpty())
         {
-            ArrayList var6 = new ArrayList();
-            Iterator var7 = this.chunksToLoad.iterator();
-            ArrayList var3 = new ArrayList();
+            ArrayList arraylist = new ArrayList();
+            Iterator iterator = field_71129_f.iterator();
+            ArrayList arraylist1 = new ArrayList();
 
-            while (var7.hasNext() && var6.size() < 5)
+            do
             {
-                ChunkCoordIntPair var4 = (ChunkCoordIntPair)var7.next();
-                var7.remove();
-
-                if (var4 != null && this.worldObj.blockExists(var4.chunkXPos << 4, 0, var4.chunkZPos << 4))
+                if (!iterator.hasNext() || arraylist.size() >= 5)
                 {
-                    var6.add(this.worldObj.getChunkFromChunkCoords(var4.chunkXPos, var4.chunkZPos));
-                    var3.addAll(((WorldServer)this.worldObj).getAllTileEntityInBox(var4.chunkXPos * 16, 0, var4.chunkZPos * 16, var4.chunkXPos * 16 + 16, 256, var4.chunkZPos * 16 + 16));
+                    break;
+                }
+
+                ChunkCoordIntPair chunkcoordintpair = (ChunkCoordIntPair)iterator.next();
+                iterator.remove();
+
+                if (chunkcoordintpair != null && worldObj.blockExists(chunkcoordintpair.chunkXPos << 4, 0, chunkcoordintpair.chunkZPos << 4))
+                {
+                    arraylist.add(worldObj.getChunkFromChunkCoords(chunkcoordintpair.chunkXPos, chunkcoordintpair.chunkZPos));
+                    arraylist1.addAll(((WorldServer)worldObj).func_73049_a(chunkcoordintpair.chunkXPos * 16, 0, chunkcoordintpair.chunkZPos * 16, chunkcoordintpair.chunkXPos * 16 + 16, 256, chunkcoordintpair.chunkZPos * 16 + 16));
                 }
             }
+            while (true);
 
-            if (!var6.isEmpty())
+            if (!arraylist.isEmpty())
             {
-                this.serverForThisPlayer.sendPacketToPlayer(new Packet56MapChunks(var6));
-                Iterator var10 = var3.iterator();
+                netHandler.func_72567_b(new Packet56MapChunks(arraylist));
+                TileEntity tileentity;
 
-                while (var10.hasNext())
+                for (Iterator iterator2 = arraylist1.iterator(); iterator2.hasNext(); func_71119_a(tileentity))
                 {
-                    TileEntity var5 = (TileEntity)var10.next();
-                    this.sendTileEntityToPlayer(var5);
+                    tileentity = (TileEntity)iterator2.next();
                 }
             }
         }
 
-        if (!this.destroyedItemsNetCache.isEmpty())
+        if (!field_71130_g.isEmpty())
         {
-            var1 = Math.min(this.destroyedItemsNetCache.size(), 127);
-            int[] var8 = new int[var1];
-            Iterator var9 = this.destroyedItemsNetCache.iterator();
-            int var11 = 0;
+            int j = Math.min(field_71130_g.size(), 127);
+            int ai[] = new int[j];
+            Iterator iterator1 = field_71130_g.iterator();
 
-            while (var9.hasNext() && var11 < var1)
+            for (int k = 0; iterator1.hasNext() && k < j; iterator1.remove())
             {
-                var8[var11++] = ((Integer)var9.next()).intValue();
-                var9.remove();
+                ai[k++] = ((Integer)iterator1.next()).intValue();
             }
 
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet29DestroyEntity(var8));
+            netHandler.func_72567_b(new Packet29DestroyEntity(ai));
         }
     }
 
-    public void onUpdateEntity()
+    public void func_71127_g()
     {
         super.onUpdate();
 
-        for (int var1 = 0; var1 < this.inventory.getSizeInventory(); ++var1)
+        for (int i = 0; i < inventory.getSizeInventory(); i++)
         {
-            ItemStack var2 = this.inventory.getStackInSlot(var1);
+            ItemStack itemstack = inventory.getStackInSlot(i);
 
-            if (var2 != null && Item.itemsList[var2.itemID].isMap() && this.serverForThisPlayer.packetSize() <= 2)
+            if (itemstack == null || !Item.itemsList[itemstack.itemID].func_77643_m_() || netHandler.func_72568_e() > 2)
             {
-                Packet var3 = ((ItemMapBase)Item.itemsList[var2.itemID]).createMapDataPacket(var2, this.worldObj, this);
+                continue;
+            }
 
-                if (var3 != null)
-                {
-                    this.serverForThisPlayer.sendPacketToPlayer(var3);
-                }
+            Packet packet = ((ItemMapBase)Item.itemsList[itemstack.itemID]).func_77871_c(itemstack, worldObj, this);
+
+            if (packet != null)
+            {
+                netHandler.func_72567_b(packet);
             }
         }
 
-        if (this.inPortal)
+        if (inPortal)
         {
-            if (this.minecraftInstance.getAllowNether())
+            if (field_71133_b.func_71255_r())
             {
-                if (this.craftingInventory != this.inventorySlots)
+                if (craftingInventory != inventorySlots)
                 {
-                    this.closeScreen();
+                    closeScreen();
                 }
 
-                if (this.ridingEntity != null)
+                if (ridingEntity != null)
                 {
-                    this.mountEntity(this.ridingEntity);
+                    mountEntity(ridingEntity);
                 }
                 else
                 {
-                    this.timeInPortal += 0.0125F;
+                    timeInPortal += 0.0125F;
 
-                    if (this.timeInPortal >= 1.0F)
+                    if (timeInPortal >= 1.0F)
                     {
-                        this.timeInPortal = 1.0F;
-                        this.timeUntilPortal = 10;
-                        boolean var4 = false;
-                        byte var5;
+                        timeInPortal = 1.0F;
+                        timeUntilPortal = 10;
+                        byte byte0 = 0;
 
-                        if (this.dimension == -1)
+                        if (dimension == -1)
                         {
-                            var5 = 0;
+                            byte0 = 0;
                         }
                         else
                         {
-                            var5 = -1;
+                            byte0 = -1;
                         }
 
-                        this.minecraftInstance.getConfigurationManager().transferPlayerToDimension(this, var5);
-                        this.lastExperience = -1;
-                        this.lastHealth = -1;
-                        this.lastFoodLevel = -1;
-                        this.triggerAchievement(AchievementList.portal);
+                        field_71133_b.func_71203_ab().func_72356_a(this, byte0);
+                        field_71144_ck = -1;
+                        field_71149_ch = -1;
+                        field_71146_ci = -1;
+                        triggerAchievement(AchievementList.portal);
                     }
                 }
 
-                this.inPortal = false;
+                inPortal = false;
             }
         }
         else
         {
-            if (this.timeInPortal > 0.0F)
+            if (timeInPortal > 0.0F)
             {
-                this.timeInPortal -= 0.05F;
+                timeInPortal -= 0.05F;
             }
 
-            if (this.timeInPortal < 0.0F)
+            if (timeInPortal < 0.0F)
             {
-                this.timeInPortal = 0.0F;
+                timeInPortal = 0.0F;
             }
         }
 
-        if (this.timeUntilPortal > 0)
+        if (timeUntilPortal > 0)
         {
-            --this.timeUntilPortal;
+            timeUntilPortal--;
         }
 
-        if (this.getHealth() != this.lastHealth || this.lastFoodLevel != this.foodStats.getFoodLevel() || this.foodStats.getSaturationLevel() == 0.0F != this.wasHungry)
+        if (getHealth() != field_71149_ch || field_71146_ci != foodStats.getFoodLevel() || (foodStats.getSaturationLevel() == 0.0F) != field_71147_cj)
         {
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet8UpdateHealth(this.getHealth(), this.foodStats.getFoodLevel(), this.foodStats.getSaturationLevel()));
-            this.lastHealth = this.getHealth();
-            this.lastFoodLevel = this.foodStats.getFoodLevel();
-            this.wasHungry = this.foodStats.getSaturationLevel() == 0.0F;
+            netHandler.func_72567_b(new Packet8UpdateHealth(getHealth(), foodStats.getFoodLevel(), foodStats.getSaturationLevel()));
+            field_71149_ch = getHealth();
+            field_71146_ci = foodStats.getFoodLevel();
+            field_71147_cj = foodStats.getSaturationLevel() == 0.0F;
         }
 
-        if (this.experienceTotal != this.lastExperience)
+        if (experienceTotal != field_71144_ck)
         {
-            this.lastExperience = this.experienceTotal;
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet43Experience(this.experience, this.experienceTotal, this.experienceLevel));
+            field_71144_ck = experienceTotal;
+            netHandler.func_72567_b(new Packet43Experience(experience, experienceTotal, experienceLevel));
         }
     }
 
-    /**
-     * 0 = item, 1-n is armor
-     */
-    public ItemStack getCurrentItemOrArmor(int par1)
+    public ItemStack func_71124_b(int par1)
     {
-        return par1 == 0 ? this.inventory.getCurrentItem() : this.inventory.armorInventory[par1 - 1];
+        if (par1 == 0)
+        {
+            return inventory.getCurrentItem();
+        }
+        else
+        {
+            return inventory.armorInventory[par1 - 1];
+        }
     }
 
     /**
@@ -323,8 +306,8 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void onDeath(DamageSource par1DamageSource)
     {
-        this.minecraftInstance.getConfigurationManager().sendPacketToAllPlayers(new Packet3Chat(par1DamageSource.func_76360_b(this)));
-        this.inventory.dropAllItems();
+        field_71133_b.func_71203_ab().func_72384_a(new Packet3Chat(par1DamageSource.func_76360_b(this)));
+        inventory.dropAllItems();
     }
 
     /**
@@ -332,34 +315,32 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public boolean attackEntityFrom(DamageSource par1DamageSource, int par2)
     {
-        if (this.initialInvulnerability > 0)
+        if (field_71145_cl > 0)
         {
             return false;
         }
-        else
-        {
-            if (!this.minecraftInstance.isPVPEnabled() && par1DamageSource instanceof EntityDamageSource)
-            {
-                Entity var3 = par1DamageSource.getEntity();
 
-                if (var3 instanceof EntityPlayer)
+        if (!field_71133_b.func_71219_W() && (par1DamageSource instanceof EntityDamageSource))
+        {
+            Entity entity = par1DamageSource.getEntity();
+
+            if (entity instanceof EntityPlayer)
+            {
+                return false;
+            }
+
+            if (entity instanceof EntityArrow)
+            {
+                EntityArrow entityarrow = (EntityArrow)entity;
+
+                if (entityarrow.shootingEntity instanceof EntityPlayer)
                 {
                     return false;
                 }
-
-                if (var3 instanceof EntityArrow)
-                {
-                    EntityArrow var4 = (EntityArrow)var3;
-
-                    if (var4.shootingEntity instanceof EntityPlayer)
-                    {
-                        return false;
-                    }
-                }
             }
-
-            return super.attackEntityFrom(par1DamageSource, par2);
         }
+
+        return super.attackEntityFrom(par1DamageSource, par2);
     }
 
     /**
@@ -367,47 +348,44 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     protected boolean isPVPEnabled()
     {
-        return this.minecraftInstance.isPVPEnabled();
+        return field_71133_b.func_71219_W();
     }
 
     public void travelToTheEnd(int par1)
     {
-        if (this.dimension == 1 && par1 == 1)
+        if (dimension == 1 && par1 == 1)
         {
-            this.triggerAchievement(AchievementList.theEnd2);
-            this.worldObj.setEntityDead(this);
-            this.playerHasConqueredTheEnd = true;
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet70GameEvent(4, 0));
+            triggerAchievement(AchievementList.theEnd2);
+            worldObj.setEntityDead(this);
+            field_71136_j = true;
+            netHandler.func_72567_b(new Packet70GameEvent(4, 0));
         }
         else
         {
-            this.triggerAchievement(AchievementList.theEnd);
-            ChunkCoordinates var2 = this.minecraftInstance.worldServerForDimension(par1).getEntrancePortalLocation();
+            triggerAchievement(AchievementList.theEnd);
+            ChunkCoordinates chunkcoordinates = field_71133_b.func_71218_a(par1).func_73054_j();
 
-            if (var2 != null)
+            if (chunkcoordinates != null)
             {
-                this.serverForThisPlayer.setPlayerLocation((double)var2.posX, (double)var2.posY, (double)var2.posZ, 0.0F, 0.0F);
+                netHandler.func_72569_a(chunkcoordinates.posX, chunkcoordinates.posY, chunkcoordinates.posZ, 0.0F, 0.0F);
             }
 
-            this.minecraftInstance.getConfigurationManager().transferPlayerToDimension(this, 1);
-            this.lastExperience = -1;
-            this.lastHealth = -1;
-            this.lastFoodLevel = -1;
+            field_71133_b.func_71203_ab().func_72356_a(this, 1);
+            field_71144_ck = -1;
+            field_71149_ch = -1;
+            field_71146_ci = -1;
         }
     }
 
-    /**
-     * called from onUpdate for all tileEntity in specific chunks
-     */
-    private void sendTileEntityToPlayer(TileEntity par1TileEntity)
+    private void func_71119_a(TileEntity par1TileEntity)
     {
         if (par1TileEntity != null)
         {
-            Packet var2 = par1TileEntity.getAuxillaryInfoPacket();
+            Packet packet = par1TileEntity.func_70319_e();
 
-            if (var2 != null)
+            if (packet != null)
             {
-                this.serverForThisPlayer.sendPacketToPlayer(var2);
+                netHandler.func_72567_b(packet);
             }
         }
     }
@@ -419,26 +397,26 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
     {
         if (!par1Entity.isDead)
         {
-            EntityTracker var3 = this.getServerForPlayer().getEntityTracker();
+            EntityTracker entitytracker = func_71121_q().func_73039_n();
 
             if (par1Entity instanceof EntityItem)
             {
-                var3.sendPacketToAllPlayersTrackingEntity(par1Entity, new Packet22Collect(par1Entity.entityId, this.entityId));
+                entitytracker.func_72784_a(par1Entity, new Packet22Collect(par1Entity.entityId, entityId));
             }
 
             if (par1Entity instanceof EntityArrow)
             {
-                var3.sendPacketToAllPlayersTrackingEntity(par1Entity, new Packet22Collect(par1Entity.entityId, this.entityId));
+                entitytracker.func_72784_a(par1Entity, new Packet22Collect(par1Entity.entityId, entityId));
             }
 
             if (par1Entity instanceof EntityXPOrb)
             {
-                var3.sendPacketToAllPlayersTrackingEntity(par1Entity, new Packet22Collect(par1Entity.entityId, this.entityId));
+                entitytracker.func_72784_a(par1Entity, new Packet22Collect(par1Entity.entityId, entityId));
             }
         }
 
         super.onItemPickup(par1Entity, par2);
-        this.craftingInventory.updateCraftingResults();
+        craftingInventory.updateCraftingResults();
     }
 
     /**
@@ -446,11 +424,11 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void swingItem()
     {
-        if (!this.isSwinging)
+        if (!isSwinging)
         {
-            this.swingProgressInt = -1;
-            this.isSwinging = true;
-            this.getServerForPlayer().getEntityTracker().sendPacketToAllPlayersTrackingEntity(this, new Packet18Animation(this, 1));
+            swingProgressInt = -1;
+            isSwinging = true;
+            func_71121_q().func_73039_n().func_72784_a(this, new Packet18Animation(this, 1));
         }
     }
 
@@ -459,17 +437,17 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public EnumStatus sleepInBedAt(int par1, int par2, int par3)
     {
-        EnumStatus var4 = super.sleepInBedAt(par1, par2, par3);
+        EnumStatus enumstatus = super.sleepInBedAt(par1, par2, par3);
 
-        if (var4 == EnumStatus.OK)
+        if (enumstatus == EnumStatus.OK)
         {
-            Packet17Sleep var5 = new Packet17Sleep(this, 0, par1, par2, par3);
-            this.getServerForPlayer().getEntityTracker().sendPacketToAllPlayersTrackingEntity(this, var5);
-            this.serverForThisPlayer.setPlayerLocation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
-            this.serverForThisPlayer.sendPacketToPlayer(var5);
+            Packet17Sleep packet17sleep = new Packet17Sleep(this, 0, par1, par2, par3);
+            func_71121_q().func_73039_n().func_72784_a(this, packet17sleep);
+            netHandler.func_72569_a(posX, posY, posZ, rotationYaw, rotationPitch);
+            netHandler.func_72567_b(packet17sleep);
         }
 
-        return var4;
+        return enumstatus;
     }
 
     /**
@@ -477,16 +455,16 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void wakeUpPlayer(boolean par1, boolean par2, boolean par3)
     {
-        if (this.isPlayerSleeping())
+        if (isPlayerSleeping())
         {
-            this.getServerForPlayer().getEntityTracker().sendPacketToAllAssociatedPlayers(this, new Packet18Animation(this, 3));
+            func_71121_q().func_73039_n().func_72789_b(this, new Packet18Animation(this, 3));
         }
 
         super.wakeUpPlayer(par1, par2, par3);
 
-        if (this.serverForThisPlayer != null)
+        if (netHandler != null)
         {
-            this.serverForThisPlayer.setPlayerLocation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
+            netHandler.func_72569_a(posX, posY, posZ, rotationYaw, rotationPitch);
         }
     }
 
@@ -496,48 +474,47 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
     public void mountEntity(Entity par1Entity)
     {
         super.mountEntity(par1Entity);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet39AttachEntity(this, this.ridingEntity));
-        this.serverForThisPlayer.setPlayerLocation(this.posX, this.posY, this.posZ, this.rotationYaw, this.rotationPitch);
+        netHandler.func_72567_b(new Packet39AttachEntity(this, ridingEntity));
+        netHandler.func_72569_a(posX, posY, posZ, rotationYaw, rotationPitch);
     }
 
     /**
      * Takes in the distance the entity has fallen this tick and whether its on the ground to update the fall distance
      * and deal fall damage if landing on the ground.  Args: distanceFallenThisTick, onGround
      */
-    protected void updateFallState(double par1, boolean par3) {}
+    protected void updateFallState(double d, boolean flag)
+    {
+    }
 
-    /**
-     * likeUpdateFallState, but called from updateFlyingState, rather than moveEntity
-     */
-    public void updateFlyingState(double par1, boolean par3)
+    public void func_71122_b(double par1, boolean par3)
     {
         super.updateFallState(par1, par3);
     }
 
-    private void incrementWindowID()
+    private void func_71117_bO()
     {
-        this.currentWindowId = this.currentWindowId % 100 + 1;
+        field_71139_cq = field_71139_cq % 100 + 1;
     }
 
     /**
      * Displays the crafting GUI for a workbench.
      */
-    public void displayGUIWorkbench(int par1, int par2, int par3)
+    public void displayWorkbenchGUI(int par1, int par2, int par3)
     {
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 1, "Crafting", 9));
-        this.craftingInventory = new ContainerWorkbench(this.inventory, this.worldObj, par1, par2, par3);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 1, "Crafting", 9));
+        craftingInventory = new ContainerWorkbench(inventory, worldObj, par1, par2, par3);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
     public void displayGUIEnchantment(int par1, int par2, int par3)
     {
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 4, "Enchanting", 9));
-        this.craftingInventory = new ContainerEnchantment(this.inventory, this.worldObj, par1, par2, par3);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 4, "Enchanting", 9));
+        craftingInventory = new ContainerEnchantment(inventory, worldObj, par1, par2, par3);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
     /**
@@ -545,16 +522,16 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void displayGUIChest(IInventory par1IInventory)
     {
-        if (this.craftingInventory != this.inventorySlots)
+        if (craftingInventory != inventorySlots)
         {
-            this.closeScreen();
+            closeScreen();
         }
 
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 0, par1IInventory.getInvName(), par1IInventory.getSizeInventory()));
-        this.craftingInventory = new ContainerChest(this.inventory, par1IInventory);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 0, par1IInventory.getInvName(), par1IInventory.getSizeInventory()));
+        craftingInventory = new ContainerChest(inventory, par1IInventory);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
     /**
@@ -562,11 +539,11 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void displayGUIFurnace(TileEntityFurnace par1TileEntityFurnace)
     {
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 2, par1TileEntityFurnace.getInvName(), par1TileEntityFurnace.getSizeInventory()));
-        this.craftingInventory = new ContainerFurnace(this.inventory, par1TileEntityFurnace);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 2, par1TileEntityFurnace.getInvName(), par1TileEntityFurnace.getSizeInventory()));
+        craftingInventory = new ContainerFurnace(inventory, par1TileEntityFurnace);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
     /**
@@ -574,11 +551,11 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void displayGUIDispenser(TileEntityDispenser par1TileEntityDispenser)
     {
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 3, par1TileEntityDispenser.getInvName(), par1TileEntityDispenser.getSizeInventory()));
-        this.craftingInventory = new ContainerDispenser(this.inventory, par1TileEntityDispenser);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 3, par1TileEntityDispenser.getInvName(), par1TileEntityDispenser.getSizeInventory()));
+        craftingInventory = new ContainerDispenser(inventory, par1TileEntityDispenser);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
     /**
@@ -586,36 +563,36 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void displayGUIBrewingStand(TileEntityBrewingStand par1TileEntityBrewingStand)
     {
-        this.incrementWindowID();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 5, par1TileEntityBrewingStand.getInvName(), par1TileEntityBrewingStand.getSizeInventory()));
-        this.craftingInventory = new ContainerBrewingStand(this.inventory, par1TileEntityBrewingStand);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
+        func_71117_bO();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 5, par1TileEntityBrewingStand.getInvName(), par1TileEntityBrewingStand.getSizeInventory()));
+        craftingInventory = new ContainerBrewingStand(inventory, par1TileEntityBrewingStand);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
     }
 
-    public void displayGUIMerchant(IMerchant par1IMerchant)
+    public void func_71030_a(IMerchant par1IMerchant)
     {
-        this.incrementWindowID();
-        this.craftingInventory = new ContainerMerchant(this.inventory, par1IMerchant, this.worldObj);
-        this.craftingInventory.windowId = this.currentWindowId;
-        this.craftingInventory.addCraftingToCrafters(this);
-        InventoryMerchant var2 = ((ContainerMerchant)this.craftingInventory).getMerchantInventory();
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet100OpenWindow(this.currentWindowId, 6, var2.getInvName(), var2.getSizeInventory()));
-        MerchantRecipeList var3 = par1IMerchant.getRecipes(this);
+        func_71117_bO();
+        craftingInventory = new ContainerMerchant(inventory, par1IMerchant, worldObj);
+        craftingInventory.windowId = field_71139_cq;
+        craftingInventory.func_75132_a(this);
+        InventoryMerchant inventorymerchant = ((ContainerMerchant)craftingInventory).func_75174_d();
+        netHandler.func_72567_b(new Packet100OpenWindow(field_71139_cq, 6, inventorymerchant.getInvName(), inventorymerchant.getSizeInventory()));
+        MerchantRecipeList merchantrecipelist = par1IMerchant.func_70934_b(this);
 
-        if (var3 != null)
+        if (merchantrecipelist != null)
         {
             try
             {
-                ByteArrayOutputStream var4 = new ByteArrayOutputStream();
-                DataOutputStream var5 = new DataOutputStream(var4);
-                var5.writeInt(this.currentWindowId);
-                var3.writeRecipiesToStream(var5);
-                this.serverForThisPlayer.sendPacketToPlayer(new Packet250CustomPayload("MC|TrList", var4.toByteArray()));
+                ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
+                DataOutputStream dataoutputstream = new DataOutputStream(bytearrayoutputstream);
+                dataoutputstream.writeInt(field_71139_cq);
+                merchantrecipelist.func_77200_a(dataoutputstream);
+                netHandler.func_72567_b(new Packet250CustomPayload("MC|TrList", bytearrayoutputstream.toByteArray()));
             }
-            catch (IOException var6)
+            catch (IOException ioexception)
             {
-                var6.printStackTrace();
+                ioexception.printStackTrace();
             }
         }
     }
@@ -625,24 +602,31 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void updateCraftingInventorySlot(Container par1Container, int par2, ItemStack par3ItemStack)
     {
-        if (!(par1Container.getSlot(par2) instanceof SlotCrafting))
+        if (par1Container.getSlot(par2) instanceof SlotCrafting)
         {
-            if (!this.playerInventoryBeingManipulated)
-            {
-                this.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(par1Container.windowId, par2, par3ItemStack));
-            }
+            return;
+        }
+
+        if (field_71137_h)
+        {
+            return;
+        }
+        else
+        {
+            netHandler.func_72567_b(new Packet103SetSlot(par1Container.windowId, par2, par3ItemStack));
+            return;
         }
     }
 
-    public void sendContainerToPlayer(Container par1Container)
+    public void func_71120_a(Container par1Container)
     {
-        this.sendContainerAndContentsToPlayer(par1Container, par1Container.getInventory());
+        func_71110_a(par1Container, par1Container.func_75138_a());
     }
 
-    public void sendContainerAndContentsToPlayer(Container par1Container, List par2List)
+    public void func_71110_a(Container par1Container, List par2List)
     {
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet104WindowItems(par1Container.windowId, par2List));
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(-1, -1, this.inventory.getItemStack()));
+        netHandler.func_72567_b(new Packet104WindowItems(par1Container.windowId, par2List));
+        netHandler.func_72567_b(new Packet103SetSlot(-1, -1, inventory.getItemStack()));
     }
 
     /**
@@ -650,7 +634,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void updateCraftingInventoryInfo(Container par1Container, int par2, int par3)
     {
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet105UpdateProgressbar(par1Container.windowId, par2, par3));
+        netHandler.func_72567_b(new Packet105UpdateProgressbar(par1Container.windowId, par2, par3));
     }
 
     /**
@@ -658,22 +642,27 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void closeScreen()
     {
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet101CloseWindow(this.craftingInventory.windowId));
-        this.closeInventory();
+        netHandler.func_72567_b(new Packet101CloseWindow(craftingInventory.windowId));
+        func_71128_l();
     }
 
-    public void sendInventoryToPlayer()
+    public void func_71113_k()
     {
-        if (!this.playerInventoryBeingManipulated)
+        if (field_71137_h)
         {
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet103SetSlot(-1, -1, this.inventory.getItemStack()));
+            return;
+        }
+        else
+        {
+            netHandler.func_72567_b(new Packet103SetSlot(-1, -1, inventory.getItemStack()));
+            return;
         }
     }
 
-    public void closeInventory()
+    public void func_71128_l()
     {
-        this.craftingInventory.onCraftGuiClosed(this);
-        this.craftingInventory = this.inventorySlots;
+        craftingInventory.onCraftGuiClosed(this);
+        craftingInventory = inventorySlots;
     }
 
     /**
@@ -681,46 +670,43 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void addStat(StatBase par1StatBase, int par2)
     {
-        if (par1StatBase != null)
+        if (par1StatBase == null)
         {
-            if (!par1StatBase.isIndependent)
+            return;
+        }
+
+        if (!par1StatBase.isIndependent)
+        {
+            for (; par2 > 100; par2 -= 100)
             {
-                while (par2 > 100)
-                {
-                    this.serverForThisPlayer.sendPacketToPlayer(new Packet200Statistic(par1StatBase.statId, 100));
-                    par2 -= 100;
-                }
-
-                this.serverForThisPlayer.sendPacketToPlayer(new Packet200Statistic(par1StatBase.statId, par2));
+                netHandler.func_72567_b(new Packet200Statistic(par1StatBase.statId, 100));
             }
+
+            netHandler.func_72567_b(new Packet200Statistic(par1StatBase.statId, par2));
         }
     }
 
-    public void mountEntityAndWakeUp()
+    public void func_71123_m()
     {
-        if (this.ridingEntity != null)
+        if (ridingEntity != null)
         {
-            this.mountEntity(this.ridingEntity);
+            mountEntity(ridingEntity);
         }
 
-        if (this.riddenByEntity != null)
+        if (riddenByEntity != null)
         {
-            this.riddenByEntity.mountEntity(this);
+            riddenByEntity.mountEntity(this);
         }
 
-        if (this.sleeping)
+        if (sleeping)
         {
-            this.wakeUpPlayer(true, false, false);
+            wakeUpPlayer(true, false, false);
         }
     }
 
-    /**
-     * this function is called when a players inventory is sent to him, lastHealth is updated on any dimension
-     * transitions, then reset.
-     */
-    public void setPlayerHealthUpdated()
+    public void func_71118_n()
     {
-        this.lastHealth = -99999999;
+        field_71149_ch = 0xfa0a1f01;
     }
 
     /**
@@ -728,9 +714,9 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void addChatMessage(String par1Str)
     {
-        StringTranslate var2 = StringTranslate.getInstance();
-        String var3 = var2.translateKey(par1Str);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet3Chat(var3));
+        StringTranslate stringtranslate = StringTranslate.getInstance();
+        String s = stringtranslate.translateKey(par1Str);
+        netHandler.func_72567_b(new Packet3Chat(s));
     }
 
     /**
@@ -738,7 +724,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     protected void onItemUseFinish()
     {
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet38EntityStatus(this.entityId, (byte)9));
+        netHandler.func_72567_b(new Packet38EntityStatus(entityId, (byte)9));
         super.onItemUseFinish();
     }
 
@@ -751,26 +737,26 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
 
         if (par1ItemStack != null && par1ItemStack.getItem() != null && par1ItemStack.getItem().getItemUseAction(par1ItemStack) == EnumAction.eat)
         {
-            this.getServerForPlayer().getEntityTracker().sendPacketToAllAssociatedPlayers(this, new Packet18Animation(this, 5));
+            func_71121_q().func_73039_n().func_72789_b(this, new Packet18Animation(this, 5));
         }
     }
 
     protected void onNewPotionEffect(PotionEffect par1PotionEffect)
     {
         super.onNewPotionEffect(par1PotionEffect);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet41EntityEffect(this.entityId, par1PotionEffect));
+        netHandler.func_72567_b(new Packet41EntityEffect(entityId, par1PotionEffect));
     }
 
     protected void onChangedPotionEffect(PotionEffect par1PotionEffect)
     {
         super.onChangedPotionEffect(par1PotionEffect);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet41EntityEffect(this.entityId, par1PotionEffect));
+        netHandler.func_72567_b(new Packet41EntityEffect(entityId, par1PotionEffect));
     }
 
     protected void onFinishedPotionEffect(PotionEffect par1PotionEffect)
     {
         super.onFinishedPotionEffect(par1PotionEffect);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet42RemoveEntityEffect(this.entityId, par1PotionEffect));
+        netHandler.func_72567_b(new Packet42RemoveEntityEffect(entityId, par1PotionEffect));
     }
 
     /**
@@ -778,7 +764,7 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void setPositionAndUpdate(double par1, double par3, double par5)
     {
-        this.serverForThisPlayer.setPlayerLocation(par1, par3, par5, this.rotationYaw, this.rotationPitch);
+        netHandler.func_72569_a(par1, par3, par5, rotationYaw, rotationPitch);
     }
 
     /**
@@ -786,96 +772,99 @@ public class EntityPlayerMP extends EntityPlayer implements ICrafting
      */
     public void onCriticalHit(Entity par1Entity)
     {
-        this.getServerForPlayer().getEntityTracker().sendPacketToAllAssociatedPlayers(this, new Packet18Animation(par1Entity, 6));
+        func_71121_q().func_73039_n().func_72789_b(this, new Packet18Animation(par1Entity, 6));
     }
 
     public void onEnchantmentCritical(Entity par1Entity)
     {
-        this.getServerForPlayer().getEntityTracker().sendPacketToAllAssociatedPlayers(this, new Packet18Animation(par1Entity, 7));
+        func_71121_q().func_73039_n().func_72789_b(this, new Packet18Animation(par1Entity, 7));
     }
 
-    /**
-     * Sends the player's abilities to the server (if there is one).
-     */
-    public void sendPlayerAbilities()
+    public void func_71016_p()
     {
-        if (this.serverForThisPlayer != null)
+        if (netHandler == null)
         {
-            this.serverForThisPlayer.sendPacketToPlayer(new Packet202PlayerAbilities(this.capabilities));
+            return;
+        }
+        else
+        {
+            netHandler.func_72567_b(new Packet202PlayerAbilities(capabilities));
+            return;
         }
     }
 
-    public WorldServer getServerForPlayer()
+    public WorldServer func_71121_q()
     {
-        return (WorldServer)this.worldObj;
+        return (WorldServer)worldObj;
     }
 
-    public void sendGameTypeToPlayer(EnumGameType par1EnumGameType)
+    public void func_71033_a(EnumGameType par1EnumGameType)
     {
-        this.theItemInWorldManager.setGameType(par1EnumGameType);
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet70GameEvent(3, par1EnumGameType.getID()));
+        field_71134_c.func_73076_a(par1EnumGameType);
+        netHandler.func_72567_b(new Packet70GameEvent(3, par1EnumGameType.func_77148_a()));
     }
 
-    public void sendChatToPlayer(String par1Str)
+    public void func_70006_a(String par1Str)
     {
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet3Chat(par1Str));
+        netHandler.func_72567_b(new Packet3Chat(par1Str));
     }
 
-    /**
-     * Returns true if the command sender is allowed to use the given command.
-     */
-    public boolean canCommandSenderUseCommand(String par1Str)
+    public boolean func_70003_b(String par1Str)
     {
-        return "seed".equals(par1Str) && !this.minecraftInstance.isDedicatedServer() ? true : this.minecraftInstance.getConfigurationManager().areCommandsAllowed(this.username);
+        if ("seed".equals(par1Str) && !field_71133_b.func_71262_S())
+        {
+            return true;
+        }
+        else
+        {
+            return field_71133_b.func_71203_ab().func_72353_e(username);
+        }
     }
 
     public String func_71114_r()
     {
-        String var1 = this.serverForThisPlayer.theNetworkManager.getSocketAddress().toString();
-        var1 = var1.substring(var1.indexOf("/") + 1);
-        var1 = var1.substring(0, var1.indexOf(":"));
-        return var1;
+        String s = netHandler.field_72575_b.func_74430_c().toString();
+        s = s.substring(s.indexOf("/") + 1);
+        s = s.substring(0, s.indexOf(":"));
+        return s;
     }
 
-    public void updateClientInfo(Packet204ClientInfo par1Packet204ClientInfo)
+    public void func_71125_a(Packet204ClientInfo par1Packet204ClientInfo)
     {
-        if (this.translator.getLanguageList().containsKey(par1Packet204ClientInfo.getLanguage()))
+        if (field_71148_cg.getLanguageList().containsKey(par1Packet204ClientInfo.func_73459_d()))
         {
-            this.translator.setLanguage(par1Packet204ClientInfo.getLanguage());
+            field_71148_cg.setLanguage(par1Packet204ClientInfo.func_73459_d());
         }
 
-        int var2 = 256 >> par1Packet204ClientInfo.getRenderDistance();
+        int i = 256 >> par1Packet204ClientInfo.func_73461_f();
 
-        if (var2 > 3 && var2 < 15)
+        if (i > 3 && i < 15)
         {
-            this.renderDistance = var2;
+            field_71142_cm = i;
         }
 
-        this.chatVisibility = par1Packet204ClientInfo.getChatVisibility();
-        this.chatColours = par1Packet204ClientInfo.getChatColours();
+        field_71143_cn = par1Packet204ClientInfo.func_73463_g();
+        field_71140_co = par1Packet204ClientInfo.func_73460_h();
 
-        if (this.minecraftInstance.isSinglePlayer() && this.minecraftInstance.getServerOwner().equals(this.username))
+        if (field_71133_b.func_71264_H() && field_71133_b.func_71214_G().equals(username))
         {
-            this.minecraftInstance.setDifficultyForAllDimensions(par1Packet204ClientInfo.getDifficulty());
+            field_71133_b.func_71226_c(par1Packet204ClientInfo.func_73462_i());
         }
     }
 
-    public StringTranslate getTranslator()
+    public StringTranslate func_71025_t()
     {
-        return this.translator;
+        return field_71148_cg;
     }
 
-    public int getChatVisibility()
+    public int func_71126_v()
     {
-        return this.chatVisibility;
+        return field_71143_cn;
     }
 
-    /**
-     * on recieving this message the client (if permission is given) will download the requested textures
-     */
-    public void requestTexturePackLoad(String par1Str, int par2)
+    public void func_71115_a(String par1Str, int par2)
     {
-        String var3 = par1Str + "\u0000" + par2;
-        this.serverForThisPlayer.sendPacketToPlayer(new Packet250CustomPayload("MC|TPack", var3.getBytes()));
+        String s = (new StringBuilder()).append(par1Str).append("\0").append(par2).toString();
+        netHandler.func_72567_b(new Packet250CustomPayload("MC|TPack", s.getBytes()));
     }
 }

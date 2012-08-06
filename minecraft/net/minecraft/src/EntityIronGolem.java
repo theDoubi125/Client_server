@@ -1,36 +1,39 @@
 package net.minecraft.src;
 
+import java.util.Random;
+
 public class EntityIronGolem extends EntityGolem
 {
-    /** deincrements, and a distance-to-home check is done at 0 */
-    private int homeCheckTimer = 0;
-    Village villageObj = null;
-    private int attackTimer;
-    private int holdRoseTick;
+    private int field_70858_e;
+    Village villageObj;
+    private int field_70855_f;
+    private int field_70856_g;
 
     public EntityIronGolem(World par1World)
     {
         super(par1World);
-        this.texture = "/mob/villager_golem.png";
-        this.setSize(1.4F, 2.9F);
-        this.getNavigator().setAvoidsWater(true);
-        this.tasks.addTask(1, new EntityAIAttackOnCollide(this, 0.25F, true));
-        this.tasks.addTask(2, new EntityAIMoveTowardsTarget(this, 0.22F, 32.0F));
-        this.tasks.addTask(3, new EntityAIMoveThroughVillage(this, 0.16F, true));
-        this.tasks.addTask(4, new EntityAIMoveTwardsRestriction(this, 0.16F));
-        this.tasks.addTask(5, new EntityAILookAtVillager(this));
-        this.tasks.addTask(6, new EntityAIWander(this, 0.16F));
-        this.tasks.addTask(7, new EntityAIWatchClosest(this, EntityPlayer.class, 6.0F));
-        this.tasks.addTask(8, new EntityAILookIdle(this));
-        this.targetTasks.addTask(1, new EntityAIDefendVillage(this));
-        this.targetTasks.addTask(2, new EntityAIHurtByTarget(this, false));
-        this.targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, EntityMob.class, 16.0F, 0, false, true));
+        field_70858_e = 0;
+        villageObj = null;
+        texture = "/mob/villager_golem.png";
+        setSize(1.4F, 2.9F);
+        getNavigator().setAvoidsWater(true);
+        tasks.addTask(1, new EntityAIAttackOnCollide(this, 0.25F, true));
+        tasks.addTask(2, new EntityAIMoveTowardsTarget(this, 0.22F, 32F));
+        tasks.addTask(3, new EntityAIMoveThroughVillage(this, 0.16F, true));
+        tasks.addTask(4, new EntityAIMoveTwardsRestriction(this, 0.16F));
+        tasks.addTask(5, new EntityAILookAtVillager(this));
+        tasks.addTask(6, new EntityAIWander(this, 0.16F));
+        tasks.addTask(7, new EntityAIWatchClosest(this, net.minecraft.src.EntityPlayer.class, 6F));
+        tasks.addTask(8, new EntityAILookIdle(this));
+        targetTasks.addTask(1, new EntityAIDefendVillage(this));
+        targetTasks.addTask(2, new EntityAIHurtByTarget(this, false));
+        targetTasks.addTask(3, new EntityAINearestAttackableTarget(this, net.minecraft.src.EntityMob.class, 16F, 0, false, true));
     }
 
     protected void entityInit()
     {
         super.entityInit();
-        this.dataWatcher.addObject(16, Byte.valueOf((byte)0));
+        dataWatcher.addObject(16, Byte.valueOf((byte)0));
     }
 
     /**
@@ -46,19 +49,19 @@ public class EntityIronGolem extends EntityGolem
      */
     protected void updateAITick()
     {
-        if (--this.homeCheckTimer <= 0)
+        if (--field_70858_e <= 0)
         {
-            this.homeCheckTimer = 70 + this.rand.nextInt(50);
-            this.villageObj = this.worldObj.villageCollectionObj.findNearestVillage(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 32);
+            field_70858_e = 70 + rand.nextInt(50);
+            villageObj = worldObj.villageCollectionObj.findNearestVillage(MathHelper.floor_double(posX), MathHelper.floor_double(posY), MathHelper.floor_double(posZ), 32);
 
-            if (this.villageObj == null)
+            if (villageObj == null)
             {
-                this.detachHome();
+                detachHome();
             }
             else
             {
-                ChunkCoordinates var1 = this.villageObj.getCenter();
-                this.setHomeArea(var1.posX, var1.posY, var1.posZ, this.villageObj.getVillageRadius());
+                ChunkCoordinates chunkcoordinates = villageObj.getCenter();
+                setHomeArea(chunkcoordinates.posX, chunkcoordinates.posY, chunkcoordinates.posZ, villageObj.getVillageRadius());
             }
         }
 
@@ -86,60 +89,67 @@ public class EntityIronGolem extends EntityGolem
     {
         super.onLivingUpdate();
 
-        if (this.attackTimer > 0)
+        if (field_70855_f > 0)
         {
-            --this.attackTimer;
+            field_70855_f--;
         }
 
-        if (this.holdRoseTick > 0)
+        if (field_70856_g > 0)
         {
-            --this.holdRoseTick;
+            field_70856_g--;
         }
 
-        if (this.motionX * this.motionX + this.motionZ * this.motionZ > 2.500000277905201E-7D && this.rand.nextInt(5) == 0)
+        if (motionX * motionX + motionZ * motionZ > 2.5000002779052011E-007D && rand.nextInt(5) == 0)
         {
-            int var1 = MathHelper.floor_double(this.posX);
-            int var2 = MathHelper.floor_double(this.posY - 0.20000000298023224D - (double)this.yOffset);
-            int var3 = MathHelper.floor_double(this.posZ);
-            int var4 = this.worldObj.getBlockId(var1, var2, var3);
+            int i = MathHelper.floor_double(posX);
+            int j = MathHelper.floor_double(posY - 0.20000000298023224D - (double)yOffset);
+            int k = MathHelper.floor_double(posZ);
+            int l = worldObj.getBlockId(i, j, k);
 
-            if (var4 > 0)
+            if (l > 0)
             {
-                this.worldObj.spawnParticle("tilecrack_" + var4, this.posX + ((double)this.rand.nextFloat() - 0.5D) * (double)this.width, this.boundingBox.minY + 0.1D, this.posZ + ((double)this.rand.nextFloat() - 0.5D) * (double)this.width, 4.0D * ((double)this.rand.nextFloat() - 0.5D), 0.5D, ((double)this.rand.nextFloat() - 0.5D) * 4.0D);
+                worldObj.spawnParticle((new StringBuilder()).append("tilecrack_").append(l).toString(), posX + ((double)rand.nextFloat() - 0.5D) * (double)width, boundingBox.minY + 0.10000000000000001D, posZ + ((double)rand.nextFloat() - 0.5D) * (double)width, 4D * ((double)rand.nextFloat() - 0.5D), 0.5D, ((double)rand.nextFloat() - 0.5D) * 4D);
             }
         }
     }
 
     public boolean isExplosiveMob(Class par1Class)
     {
-        return this.getBit1Flag() && EntityPlayer.class.isAssignableFrom(par1Class) ? false : super.isExplosiveMob(par1Class);
+        if (func_70850_q() && (net.minecraft.src.EntityPlayer.class).isAssignableFrom(par1Class))
+        {
+            return false;
+        }
+        else
+        {
+            return super.isExplosiveMob(par1Class);
+        }
     }
 
     public boolean attackEntityAsMob(Entity par1Entity)
     {
-        this.attackTimer = 10;
-        this.worldObj.setEntityState(this, (byte)4);
-        boolean var2 = par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), 7 + this.rand.nextInt(15));
+        field_70855_f = 10;
+        worldObj.setEntityState(this, (byte)4);
+        boolean flag = par1Entity.attackEntityFrom(DamageSource.causeMobDamage(this), 7 + rand.nextInt(15));
 
-        if (var2)
+        if (flag)
         {
-            par1Entity.motionY += 0.4000000059604645D;
+            par1Entity.motionY += 0.40000000596046448D;
         }
 
-        this.worldObj.playSoundAtEntity(this, "mob.irongolem.throw", 1.0F, 1.0F);
-        return var2;
+        worldObj.playSoundAtEntity(this, "mob.irongolem.throw", 1.0F, 1.0F);
+        return flag;
     }
 
     public void handleHealthUpdate(byte par1)
     {
         if (par1 == 4)
         {
-            this.attackTimer = 10;
-            this.worldObj.playSoundAtEntity(this, "mob.irongolem.throw", 1.0F, 1.0F);
+            field_70855_f = 10;
+            worldObj.playSoundAtEntity(this, "mob.irongolem.throw", 1.0F, 1.0F);
         }
         else if (par1 == 11)
         {
-            this.holdRoseTick = 400;
+            field_70856_g = 400;
         }
         else
         {
@@ -149,18 +159,18 @@ public class EntityIronGolem extends EntityGolem
 
     public Village getVillage()
     {
-        return this.villageObj;
+        return villageObj;
     }
 
-    public int getAttackTimer()
+    public int func_70854_o()
     {
-        return this.attackTimer;
+        return field_70855_f;
     }
 
-    public void setHoldingRose(boolean par1)
+    public void func_70851_e(boolean par1)
     {
-        this.holdRoseTick = par1 ? 400 : 0;
-        this.worldObj.setEntityState(this, (byte)11);
+        field_70856_g = par1 ? 400 : 0;
+        worldObj.setEntityState(this, (byte)11);
     }
 
     /**
@@ -192,7 +202,7 @@ public class EntityIronGolem extends EntityGolem
      */
     protected void playStepSound(int par1, int par2, int par3, int par4)
     {
-        this.worldObj.playSoundAtEntity(this, "mob.irongolem.walk", 1.0F, 1.0F);
+        worldObj.playSoundAtEntity(this, "mob.irongolem.walk", 1.0F, 1.0F);
     }
 
     /**
@@ -200,43 +210,48 @@ public class EntityIronGolem extends EntityGolem
      */
     protected void dropFewItems(boolean par1, int par2)
     {
-        int var3 = this.rand.nextInt(3);
-        int var4;
+        int i = rand.nextInt(3);
 
-        for (var4 = 0; var4 < var3; ++var4)
+        for (int j = 0; j < i; j++)
         {
-            this.dropItem(Block.plantRed.blockID, 1);
+            dropItem(Block.plantRed.blockID, 1);
         }
 
-        var4 = 3 + this.rand.nextInt(3);
+        int k = 3 + rand.nextInt(3);
 
-        for (int var5 = 0; var5 < var4; ++var5)
+        for (int l = 0; l < k; l++)
         {
-            this.dropItem(Item.ingotIron.shiftedIndex, 1);
+            dropItem(Item.ingotIron.shiftedIndex, 1);
         }
     }
 
-    public int getHoldRoseTick()
+    public int func_70853_p()
     {
-        return this.holdRoseTick;
+        return field_70856_g;
     }
 
-    public boolean getBit1Flag()
+    public boolean func_70850_q()
     {
-        return (this.dataWatcher.getWatchableObjectByte(16) & 1) != 0;
+        return (dataWatcher.getWatchableObjectByte(16) & 1) != 0;
     }
 
-    public void setBit1FlagTo(boolean par1)
+    public void func_70849_f(boolean par1)
     {
-        byte var2 = this.dataWatcher.getWatchableObjectByte(16);
+        byte byte0 = dataWatcher.getWatchableObjectByte(16);
 
         if (par1)
         {
-            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 | 1)));
+            dataWatcher.updateObject(16, Byte.valueOf((byte)(byte0 | 1)));
         }
         else
         {
-            this.dataWatcher.updateObject(16, Byte.valueOf((byte)(var2 & -2)));
+            dataWatcher.updateObject(16, Byte.valueOf((byte)(byte0 & -2)));
         }
+    }
+    
+    /** doubi125 */
+    public String getName()
+    {
+    	return "Iron Golem";
     }
 }
